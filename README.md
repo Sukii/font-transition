@@ -1,6 +1,6 @@
 # Font transition
 
-This javascript solution to the problem posed in Stackoverflow:<br>
+This is javascript solution to the problem posed in Stackoverflow:<br>
 https://stackoverflow.com/questions/65680948/css-transition-with-fonts
 
 As no one answered this, with help from comments by Robby Cornelissen who pointed out the excellent opentype javascript library:<br>
