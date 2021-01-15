@@ -1,11 +1,14 @@
-var M = 100;
+var M = 200;
 var X = -50;
 var Y = 80;
 var xy1 = [];
+var len1 = [];
 var xy2 = [];
+var len2 = [];
+var dt;
 function fontTransition() {
     var char = prompt("Please input a single character", "H").charAt(0);
-    opentype.load('dev/LinLibertine_R.otf', function(err, font) {
+    opentype.load('/fonts/LinLibertine_R.otf', function(err, font) {
 	if (err) {
 	    alert('Font could not be loaded: ' + err);
 	} else {
@@ -17,17 +20,27 @@ function fontTransition() {
 	    const path = font.getPath(char, 0, 150, 72);
 	    // If you just want to draw the text you can also use font.draw(ctx, text, x, y, fontSize).
 	    path.draw(ctx);
-	    var pathdata1 = Raphael.parsePathString(path.toPathData());
-	    var length1 = Raphael.getTotalLength(pathdata1);
-	    for(var i=0; i<M+1; i++) {
-		var s = length1*i/M;
-		var point = Raphael.getPointAtLength(pathdata1, s);
-		var loc = {x: point.x, y: point.y};
-		xy1.push(loc);
-	    }
+	    var pdata1 = path.toPathData();
+	    var pds1 = pdata1.split("M");
+	    pds1.forEach(function(item, k) {
+		if(item != "") {
+		    var pathdata1 = Raphael.parsePathString("M"+item);
+		    var length1 = Raphael.getTotalLength(pathdata1);
+		    var xy1k = [];
+		    for(var i=0; i<M+1; i++) {
+			var s = length1*i/M;
+			var point = Raphael.getPointAtLength(pathdata1, s);
+			var loc = {x: point.x, y: point.y};
+			xy1k.push(loc);
+		    }
+		    xy1.push(rotateArray(xy1k));
+		    len1.push(length1);
+		}
+	    });
+	    xy1 = reorderArray(xy1,len1);
 	}
     });
-    opentype.load('dev/LinBiolinum_R.otf', function(err, font) {
+    opentype.load('/fonts/LinBiolinum_R.otf', function(err, font) {
 	if (err) {
 	    alert('Font could not be loaded: ' + err);
 	} else {
@@ -39,14 +52,24 @@ function fontTransition() {
 	    const path = font.getPath(char, 0, 150, 72);
 	    // If you just want to draw the text you can also use font.draw(ctx, text, x, y, fontSize).
 	    path.draw(ctx);
-	    var pathdata2 = Raphael.parsePathString(path.toPathData());
-	    var length2 = Raphael.getTotalLength(pathdata2);
-	    for(var i=0; i<M+1; i++) {
-		var s = length2*i/M;
-		var point = Raphael.getPointAtLength(pathdata2, s);
-		var loc = {x: point.x, y: point.y};
-		xy2.push(loc);
-	    }
+	    var pdata2 = path.toPathData();
+	    var pds2 = pdata2.split("M");
+	    pds2.forEach(function(item, k) {
+		if(item != "") {
+		    var pathdata2 = Raphael.parsePathString("M"+item);
+		    var length2 = Raphael.getTotalLength(pathdata2);
+		    var xy2k = [];
+		    for(var i=0; i<M+1; i++) {
+			var s = length2*i/M;
+			var point = Raphael.getPointAtLength(pathdata2, s);
+			var loc = {x: point.x, y: point.y};
+			xy2k.push(loc);
+		    }
+		    xy2.push(rotateArray(xy2k));
+		    len2.push(length2);
+		}
+	    });
+	    xy2 = reorderArray(xy2,len2);
 	}
     });
 }
@@ -62,6 +85,24 @@ function getTopLeftIndex(xy) {
     });
     return topleft;
 }
+function reorderArray(arr,len) {
+    var lenmax = 0;
+    var ilenmax = 0;
+    len.forEach(function(item,i) {
+	if(item > lenmax) {
+	    ilenmax = i;
+	    lenmax = item;
+	}
+    });
+    var newarr = [];
+    newarr.push(arr[ilenmax]);
+    len.forEach(function(item,i) {
+	if(i != ilenmax) {
+	    newarr.push(arr[i])
+	}
+    });
+    return newarr;
+}
 function rotateArray(arr) {
     var istart = getTopLeftIndex(arr);
     var prevArray = arr.slice(0,istart);
@@ -72,50 +113,22 @@ function anim() {
     xy1 = rotateArray(xy1);
     xy2 = rotateArray(xy2);
     var speed = parseInt(document.getElementById("speed").value);
-    var dt = 3000/speed;
+    dt = 3000/speed;
     var xyt = [];
-    for(var it=0; it<11; it++) {
-	var xyti = "";
-	xy1.forEach(function(item, i) {
-	    var xt = it*item.x/10 + (10-it)*xy2[i].x/10;
-	    var yt = it*item.y/10 + (10-it)*xy2[i].y/10;
-	    var loc = (xt-X) + "," +  (yt-Y);
-	    xyti += loc + " ";
-	});
-	xyti = xyti.replace(/ +$/,"");
-	xyt.push(xyti);
-    }
-    setTimeout(function() {
-	document.getElementById("animPolygon").setAttribute("points",xyt[0]);
-    }, 0);
-    setTimeout(function() {
-	document.getElementById("animPolygon").setAttribute("points",xyt[1]);
-    }, dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon").setAttribute("points",xyt[2]);
-    }, 2*dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon").setAttribute("points",xyt[3]);
-    }, 3*dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon").setAttribute("points",xyt[4]);
-    }, 4*dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon").setAttribute("points",xyt[5]);
-    }, 5*dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon").setAttribute("points",xyt[6]);
-    }, 6*dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon").setAttribute("points",xyt[7]);
-    }, 7*dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon").setAttribute("points",xyt[8]);
-    }, 8*dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon").setAttribute("points",xyt[9]);
-    }, 9*dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon").setAttribute("points",xyt[10]);
-    }, 10*dt);
+    xy1.forEach(function(ktem, k) {
+	var xytk = [];
+	for(var it=0; it<11; it++) {
+	    var xyti = "";
+	    ktem.forEach(function(item, i) {
+		var xt = it*item.x/10 + (10-it)*xy2[k][i].x/10;
+		var yt = it*item.y/10 + (10-it)*xy2[k][i].y/10;
+		var loc = (xt-X) + "," +  (yt-Y);
+		xyti += loc + " ";
+	    });
+	    xyti = xyti.replace(/ +$/,"");
+	    xytk.push(xyti);
+	}
+	xyt.push(xytk);
+    });
+    setAnimation(xyt);
 }
