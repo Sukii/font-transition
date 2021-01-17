@@ -1,10 +1,12 @@
 var M = 200;
 var X = -50;
-var Y = 80;
+var Y = 50;
 var xy1 = [];
 var len1 = [];
+var y1m = [];
 var xy2 = [];
 var len2 = [];
+var y2m = [];
 var dt;
 function fontTransition() {
     var char = prompt("Please input a single character", "H").charAt(0);
@@ -17,7 +19,7 @@ function fontTransition() {
 	    // Construct a Path object containing the letter shapes of the given text.
 	    // The other parameters are x, y and fontSize.
 	    // Note that y is the position of the baseline.
-	    const path = font.getPath(char, 0, 150, 72);
+	    const path = font.getPath(char, 0, 120, 72);
 	    // If you just want to draw the text you can also use font.draw(ctx, text, x, y, fontSize).
 	    path.draw(ctx);
 	    var pdata1 = path.toPathData();
@@ -27,17 +29,20 @@ function fontTransition() {
 		    var pathdata1 = Raphael.parsePathString("M"+item);
 		    var length1 = Raphael.getTotalLength(pathdata1);
 		    var xy1k = [];
+		    var y1mk = 0;
 		    for(var i=0; i<M+1; i++) {
 			var s = length1*i/M;
 			var point = Raphael.getPointAtLength(pathdata1, s);
 			var loc = {x: point.x, y: point.y};
+			y1mk += point.y;
 			xy1k.push(loc);
 		    }
 		    xy1.push(rotateArray(xy1k));
 		    len1.push(length1);
+		    y1m.push(y1mk/(M+1));
 		}
 	    });
-	    xy1 = reorderArray(xy1,len1);
+	    xy1 = reorderArray(xy1,len1,y1m);
 	}
     });
     opentype.load('/fonts/LinBiolinum_R.otf', function(err, font) {
@@ -49,7 +54,7 @@ function fontTransition() {
 	    // Construct a Path object containing the letter shapes of the given text.
 	    // The other parameters are x, y and fontSize.
 	    // Note that y is the position of the baseline.
-	    const path = font.getPath(char, 0, 150, 72);
+	    const path = font.getPath(char, 0, 120, 72);
 	    // If you just want to draw the text you can also use font.draw(ctx, text, x, y, fontSize).
 	    path.draw(ctx);
 	    var pdata2 = path.toPathData();
@@ -59,17 +64,20 @@ function fontTransition() {
 		    var pathdata2 = Raphael.parsePathString("M"+item);
 		    var length2 = Raphael.getTotalLength(pathdata2);
 		    var xy2k = [];
+		    var y2mk = 0;
 		    for(var i=0; i<M+1; i++) {
 			var s = length2*i/M;
 			var point = Raphael.getPointAtLength(pathdata2, s);
 			var loc = {x: point.x, y: point.y};
+			y2mk += point.y;
 			xy2k.push(loc);
 		    }
 		    xy2.push(rotateArray(xy2k));
 		    len2.push(length2);
+		    y2m.push(y2mk/(M+1));
 		}
 	    });
-	    xy2 = reorderArray(xy2,len2);
+	    xy2 = reorderArray(xy2,len2,y2m);
 	}
     });
 }
@@ -85,7 +93,7 @@ function getTopLeftIndex(xy) {
     });
     return topleft;
 }
-function reorderArray(arr,len) {
+function reorderArray(arr,len,ym) {
     var lenmax = 0;
     var ilenmax = 0;
     len.forEach(function(item,i) {
@@ -95,12 +103,26 @@ function reorderArray(arr,len) {
 	}
     });
     var newarr = [];
+    var newlen = [];
+    var newym = [];
     newarr.push(arr[ilenmax]);
+    newlen.push(len[ilenmax]);
+    newym.push(ym[ilenmax]);
     len.forEach(function(item,i) {
 	if(i != ilenmax) {
 	    newarr.push(arr[i])
+	    newlen.push(len[i])
+	    newym.push(ym[i])
 	}
     });
+    if(ym.length == 3) {
+	if(newym[2] < newym[1]) {
+	    var narr1 = newarr[1];
+	    var narr2 = newarr[2];
+	    newarr[2] = narr1;
+	    newarr[1] = narr2;
+	}
+    }
     return newarr;
 }
 function rotateArray(arr) {
@@ -110,8 +132,6 @@ function rotateArray(arr) {
     return nextArray.concat(prevArray);
 }
 function anim() {
-    xy1 = rotateArray(xy1);
-    xy2 = rotateArray(xy2);
     var speed = parseInt(document.getElementById("speed").value);
     dt = 3000/speed;
     var xyt = [];

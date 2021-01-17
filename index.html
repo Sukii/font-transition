@@ -2,20 +2,20 @@
   <head>
     <title>Font transition</title>
     <meta charset="utf-8">
-    <link rel="stylesheet" href="/css/font-transition.css">
+    <link rel="stylesheet" href="/css/font-transition.css?v=26">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lobster">
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@latest/dist/opentype.min.js"></script>
     <script src="/js/lib/raphael.min.js"></script>
-    <script src="/js/set-font-animation.js?v=16"></script>
-    <script src="/js/font-transition.js?v=16"></script>
+    <script src="/js/set-font-animation.js?v=26"></script>
+    <script src="/js/font-transition.js?v=26"></script>
   </head>
   <body onLoad="fontTransition();">
     <h1>Font transition</h1>
-    <div id="font-transition">
+    <div id="font-display">
       <canvas id="canvas2"></canvas>
       <canvas id="canvas1"></canvas>
-      <br>
-      <br>
+    </div>
+    <div id="font-transition">
       <input id="speed" type="number" min="1" max="100" value="10"/>
       <button onClick="anim();">Show Transition</button>
       <br>
