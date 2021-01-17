@@ -1,5 +1,8 @@
 # Font transition
 
+The demo is site here:<br>
+htps://cqrl.in/dev/font-transition-js.html
+
 This is a javascript solution to the problem posed in Stackoverflow:<br>
 https://stackoverflow.com/questions/65680948/css-transition-with-fonts
 
@@ -14,6 +17,6 @@ and another crucial hint from:<br>
 https://css-tricks.com/svg-shape-morphing-works/<br>
 managed to provide a preliminary answer here.<br>
 
-It works for characters which are homeomorphic to a simple circular disc (like H, X, S, C etc.) and also ones with one hole (like O, Q, A, P, etc). It also seems to work for "B" (which has two holes) but that is just a fluke and needs to be put on a firm footing.
+It works for characters which are homeomorphic to a simple circular disc (like H, X, S, C etc.) and also ones with one hole (like O, Q, A, P, etc) and also for "B" and "g" (with two holes).
 
 
