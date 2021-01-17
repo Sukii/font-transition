@@ -3,9 +3,11 @@ var X = -50;
 var Y = 50;
 var xy1 = [];
 var len1 = [];
+var x1m = [];
 var y1m = [];
 var xy2 = [];
 var len2 = [];
+var x2m = [];
 var y2m = [];
 var dt;
 function fontTransition() {
@@ -29,20 +31,23 @@ function fontTransition() {
 		    var pathdata1 = Raphael.parsePathString("M"+item);
 		    var length1 = Raphael.getTotalLength(pathdata1);
 		    var xy1k = [];
+		    var x1mk = 0;
 		    var y1mk = 0;
 		    for(var i=0; i<M+1; i++) {
 			var s = length1*i/M;
 			var point = Raphael.getPointAtLength(pathdata1, s);
 			var loc = {x: point.x, y: point.y};
+			x1mk += point.x;
 			y1mk += point.y;
 			xy1k.push(loc);
 		    }
 		    xy1.push(rotateArray(xy1k));
 		    len1.push(length1);
+		    x1m.push(x1mk/(M+1));
 		    y1m.push(y1mk/(M+1));
 		}
 	    });
-	    xy1 = reorderArray(xy1,len1,y1m);
+	    xy1 = reorderArray(xy1,len1,x1m,y1m);
 	}
     });
     opentype.load('/fonts/LinBiolinum_R.otf', function(err, font) {
@@ -64,20 +69,23 @@ function fontTransition() {
 		    var pathdata2 = Raphael.parsePathString("M"+item);
 		    var length2 = Raphael.getTotalLength(pathdata2);
 		    var xy2k = [];
+		    var x2mk = 0;
 		    var y2mk = 0;
 		    for(var i=0; i<M+1; i++) {
 			var s = length2*i/M;
 			var point = Raphael.getPointAtLength(pathdata2, s);
 			var loc = {x: point.x, y: point.y};
+			x2mk += point.y;
 			y2mk += point.y;
 			xy2k.push(loc);
 		    }
 		    xy2.push(rotateArray(xy2k));
 		    len2.push(length2);
+		    x2m.push(x2mk/(M+1));
 		    y2m.push(y2mk/(M+1));
 		}
 	    });
-	    xy2 = reorderArray(xy2,len2,y2m);
+	    xy2 = reorderArray(xy2,len2,x2m,y2m);
 	}
     });
 }
@@ -93,7 +101,7 @@ function getTopLeftIndex(xy) {
     });
     return topleft;
 }
-function reorderArray(arr,len,ym) {
+function reorderArray(arr,len,xm,ym) {
     var lenmax = 0;
     var ilenmax = 0;
     len.forEach(function(item,i) {
@@ -135,20 +143,25 @@ function anim() {
     var speed = parseInt(document.getElementById("speed").value);
     dt = 3000/speed;
     var xyt = [];
-    xy1.forEach(function(ktem, k) {
-	var xytk = [];
-	for(var it=0; it<11; it++) {
-	    var xyti = "";
-	    ktem.forEach(function(item, i) {
-		var xt = it*item.x/10 + (10-it)*xy2[k][i].x/10;
-		var yt = it*item.y/10 + (10-it)*xy2[k][i].y/10;
-		var loc = (xt-X) + "," +  (yt-Y);
-		xyti += loc + " ";
-	    });
-	    xyti = xyti.replace(/ +$/,"");
-	    xytk.push(xyti);
-	}
-	xyt.push(xytk);
-    });
-    setAnimation(xyt);
+    if(xy2.length != xy1.length) {
+	alert("The two glyhs are not homeomorphic!");
+    }
+    else { 
+	xy1.forEach(function(ktem, k) {
+	    var xytk = [];
+	    for(var it=0; it<11; it++) {
+		var xyti = "";
+		ktem.forEach(function(item, i) {
+		    var xt = it*item.x/10 + (10-it)*xy2[k][i].x/10;
+		    var yt = it*item.y/10 + (10-it)*xy2[k][i].y/10;
+		    var loc = (xt-X) + "," +  (yt-Y);
+		    xyti += loc + " ";
+		});
+		xyti = xyti.replace(/ +$/,"");
+		xytk.push(xyti);
+	    }
+	    xyt.push(xytk);
+	});
+	setAnimation(xyt);
+    }
 }
