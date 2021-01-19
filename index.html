@@ -2,12 +2,12 @@
   <head>
     <title>Font transition</title>
     <meta charset="utf-8">
-    <link rel="stylesheet" href="/css/font-transition.css?v=26">
+    <link rel="stylesheet" href="/css/font-transition.css?v=30">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lobster">
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@latest/dist/opentype.min.js"></script>
     <script src="/js/lib/raphael.min.js"></script>
-    <script src="/js/set-font-animation.js?v=26"></script>
-    <script src="/js/font-transition.js?v=26"></script>
+    <script src="/js/set-font-animation.js?v=30"></script>
+    <script src="/js/font-transition.js?v=30"></script>
   </head>
   <body onLoad="fontTransition();">
     <h1>Font transition</h1>
@@ -19,7 +19,7 @@
       <input id="speed" type="number" min="1" max="100" value="10"/>
       <button onClick="anim();">Show Transition</button>
       <br>
-      <div id="poly-transition"><svg viewBox="0 0 200 200"><polygon fill="orange" id="animPolygon0" points="" /><polygon fill="white" id="animPolygon1" points="" /><polygon fill="white" id="animPolygon2" points="" /></svg></div>
+      <div id="poly-transition"><svg viewBox="0 0 200 200"><polygon fill="orange" id="animPolygon_0" points="" /><polygon fill="white" id="animPolygon_1" points="" /><polygon fill="white" id="animPolygon_2" points="" /><polygon fill="gold" id="animPolygon0" points="" opacity="0.7"/><polygon fill="white" id="animPolygon1" points="" opacity="0.8"/><polygon fill="white" id="animPolygon2" points="" opacity="0.8"/></svg></div>
     </div>
     <div class="footnote">You will see intermediate stages of this transition from Linux Biolinum Regular to Linux Libertine Regular soon.</div>
   </body>

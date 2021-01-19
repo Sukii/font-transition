@@ -1,5 +1,12 @@
 function setAnimation(xyt) {
     setTimeout(function() {
+	document.getElementById("animPolygon_0").setAttribute("points",xyt[0][0]);
+    }, 0);
+    setTimeout(function() {
+	document.getElementById("animPolygon0").setAttribute("points",xyt[0][0]);
+    }, 0);
+    
+    setTimeout(function() {
 	document.getElementById("animPolygon0").setAttribute("points",xyt[0][0]);
     }, 0);
     setTimeout(function() {
@@ -33,6 +40,9 @@ function setAnimation(xyt) {
 	document.getElementById("animPolygon0").setAttribute("points",xyt[0][10]);
     }, 10*dt);
     if(xyt[1]) {
+	setTimeout(function() {
+	    document.getElementById("animPolygon_1").setAttribute("points",xyt[1][0]);
+	}, 0);
 	setTimeout(function() {
 	    document.getElementById("animPolygon1").setAttribute("points",xyt[1][0]);
 	}, 0);
@@ -68,6 +78,9 @@ function setAnimation(xyt) {
 	}, 10*dt);
     }
     if(xyt[2]) {
+	setTimeout(function() {
+	    document.getElementById("animPolygon_2").setAttribute("points",xyt[2][0]);
+	}, 0);
 	setTimeout(function() {
 	    document.getElementById("animPolygon2").setAttribute("points",xyt[2][0]);
 	}, 0);
