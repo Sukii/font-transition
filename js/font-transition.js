@@ -12,6 +12,12 @@ var y2m = [];
 var dt;
 function fontTransition() {
     var char = prompt("Please input a single character", "H").charAt(0);
+    console.log("char:",char);
+    if(char.match(/^(i|j)$/)) {
+	var fillColor = document.getElementById("animPolygon0").getAttribute("fill");
+	console.log("fill:",fillColor);
+	document.getElementById("animPolygon1").setAttribute("fill", fillColor);
+    }
     opentype.load('/fonts/LinLibertine_R.otf', function(err, font) {
 	if (err) {
 	    alert('Font could not be loaded: ' + err);
