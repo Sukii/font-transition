@@ -60,7 +60,7 @@ function loadFonts() {
     },1000);
 }
 function animtext() {
-    var worker1 = new Worker('font-transition.js');
+    var worker1 = new Worker('/js/font-transition.js');
     worker1.addEventListener('message', function(e) {
 	setAnimation(e.data.xyt,e.data.chr);
     }, false);

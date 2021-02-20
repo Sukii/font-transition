@@ -33,9 +33,10 @@ function fontTransition(pds1,pds2,chr) {
     var len2 = [];
     var x2m = [];
     var y2m = [];
+    var xy1type = [];
+    var xy2type = [];
     var res1;
     var res2;
-    //console.log("pds1,pds2:",pds1,pds2);
     if(chr != " ") {
 	pds1.forEach(function(item, k) {
 	    var pp = getPathPoints(item,M*N);
@@ -43,6 +44,7 @@ function fontTransition(pds1,pds2,chr) {
 	    len1.push(pp.len);
 	    x1m.push(pp.xm);
 	    y1m.push(pp.ym);
+	    xy1type.push(pp.type);
 	});
 	res1 = reorderArray(xy1,len1,x1m,y1m);
 	//-------font2 starts here
@@ -52,10 +54,11 @@ function fontTransition(pds1,pds2,chr) {
 	    len2.push(pp.len);
 	    x2m.push(pp.xm);
 	    y2m.push(pp.ym);
+	    xy2type.push(pp.type);
 	});
 	res2 = reorderArray(xy2,len2,x2m,y2m);
     }
-    return {res1: res1, res2: res2};
+    return {res1: res1, res2: res2, xy1type: xy1type, xy2type: xy2type };
 }
 function getOrigin(chr) {
     var X0 = 0;
@@ -194,6 +197,8 @@ function anim(pds1,pds2,chr,h,v) {
 	var res = fontTransition(pds1,pds2,chr);
 	var xy1 = res.res1.arr;
 	var xy2 = res.res2.arr;
+	var xy1type = res.xy1type;
+	var xy2type = res.xy2type;
 	//console.log("pds1,pds2:",pds1,pds2);
 	//console.log("xy1,xy2",xy1,xy2);
 	showTime("after fontTransition:");
@@ -203,7 +208,7 @@ function anim(pds1,pds2,chr,h,v) {
 	else {
 	    xy1 = resetOriginForXy1(xy1,chr);
 	    var dp = makeDotPolarity(xy1,xy2);
-	    var xy1x = getXy1x(xy1,xy2,dp,chr);
+	    var xy1x = getXy1x(xy1,xy2,xy1type,xy2type,dp,chr);
 	    //console.log("xy1:",xy1);
 	    //console.log("xy2:",xy2);
 	    //console.log("xy1x:",xy1x);
@@ -227,7 +232,7 @@ function anim(pds1,pds2,chr,h,v) {
     //console.log(xyt);
     return {xyt: xyt, chr: chr};
 }
-function getXy1x(xy1,xy2,dp,chr) {
+function getXy1x(xy1,xy2,xy1type,xy2type,dp,chr) {
     //console.log("xy1,xy2:",xy1,xy2);
     var dot1 = dp.dot1;
     var dot2 = dp.dot2;
@@ -496,11 +501,24 @@ function getPathPoints(pd,K) {
 	    //console.log("Cubicx:",i,r0,r1,r2,r3,m)
 	    for(var i=0; i<m; i++) {
 		var t = i;
-		if(m > 1) { t = i/(m-1) };
+		if(m > 1) { t = i/(m-1); };
 		xy.push(getPointInCubicBrezier(r0,r1,r2,r3,t));
 		xytype.push("C");
 	    }
 	    r0 = r3;
+	}
+	else if(item.type == "Q") {
+	    var r1 = { x: item.x1, y: item.y1};
+	    var r2 = { x: item.x, y: item.y};
+	    if(mt > K-5 && mt < K) { m = m+(K-mt); }
+	    //console.log("Quadraticx:",i,r0,r1,r2,m)
+	    for(var i=0; i<m; i++) {
+		var t = i;
+		if(m > 1) { t = i/(m-1); };
+		xy.push(getPointInQuadraticBrezier(r0,r1,r2,t));
+		xytype.push("Q");
+	    }
+	    r0 = r2;
 	}
  	else if(item.type == "L") {
 	    var r1 = { x: item.x, y: item.y};
@@ -508,7 +526,7 @@ function getPathPoints(pd,K) {
 	    //console.log("Linearx:",i,r0,r1,m)
 	    for(var i=0; i<m; i++) {
 		var t = i;
-		if(m > 1) { t = i/(m-1) };
+		if(m > 1) { t = i/(m-1); };
 		xy.push(getPointInLine(r0,r1,t));
 		xytype.push("L");
 	    }
