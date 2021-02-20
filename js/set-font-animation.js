@@ -1,118 +1,63 @@
-function setAnimation(xyt) {
-    setTimeout(function() {
-	document.getElementById("animPolygon_0").setAttribute("points",xyt[0][0]);
-    }, 0);
-    setTimeout(function() {
-	document.getElementById("animPolygon0").setAttribute("points",xyt[0][0]);
-    }, 0);
-    
-    setTimeout(function() {
-	document.getElementById("animPolygon0").setAttribute("points",xyt[0][0]);
-    }, 0);
-    setTimeout(function() {
-	document.getElementById("animPolygon0").setAttribute("points",xyt[0][1]);
-    }, dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon0").setAttribute("points",xyt[0][2]);
-    }, 2*dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon0").setAttribute("points",xyt[0][3]);
-    }, 3*dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon0").setAttribute("points",xyt[0][4]);
-    }, 4*dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon0").setAttribute("points",xyt[0][5]);
-    }, 5*dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon0").setAttribute("points",xyt[0][6]);
-    }, 6*dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon0").setAttribute("points",xyt[0][7]);
-    }, 7*dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon0").setAttribute("points",xyt[0][8]);
-    }, 8*dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon0").setAttribute("points",xyt[0][9]);
-    }, 9*dt);
-    setTimeout(function() {
-	document.getElementById("animPolygon0").setAttribute("points",xyt[0][10]);
-    }, 10*dt);
+function getX(pt) {
+    return parseFloat(pt.replace(/,[^,]*$/,""));
+}
+function getY(pt) {
+    return parseFloat(pt.replace(/^[^,]*,/,""));
+}
+function simplifyPath(pts) {
+    showTime("before simplify:");
+    var pathdata = Raphael.parsePathString("M" + pts.replace(/ /g, "L").replace(/,/g," ") + "Z");
+    var length = Raphael.getTotalLength(pathdata);
+    var newarr = [];
+    for(var i=0; i<mM; i++) {
+	var s = length*i/(mM);
+	var point = Raphael.getPointAtLength(pathdata, s);
+	var loc = point.x + "," + point.y;
+	newarr.push(loc);
+    }
+    showTime("after simplify:");
+    return newarr.join(" ");
+}
+function forceDomPaint(el) {
+    console.log(window.getComputedStyle(el).display);
+}
+function addPolyElement(points, fill) {
+    var tnode =  document.getElementById("font-display");
+    var poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    var pt = document.createAttribute("points");
+    pt.value = points;
+    var fl = document.createAttribute("fill");
+    fl.value = fill;
+    poly.setAttributeNode(pt);
+    poly.setAttributeNode(fl);
+    showTime("before append polygon:");
+    tnode.appendChild(poly);
+    showTime("after append polygon:");
+    //forceDomPaint(tnode);
+}
+function setPolygonAtTimeInterval(xyt,i,chr) {
+    var fill = "black";
+    addPolyElement(xyt[0][i],fill);
     if(xyt[1]) {
-	setTimeout(function() {
-	    document.getElementById("animPolygon_1").setAttribute("points",xyt[1][0]);
-	}, 0);
-	setTimeout(function() {
-	    document.getElementById("animPolygon1").setAttribute("points",xyt[1][0]);
-	}, 0);
-	setTimeout(function() {
-	    document.getElementById("animPolygon1").setAttribute("points",xyt[1][1]);
-	}, dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon1").setAttribute("points",xyt[1][2]);
-	}, 2*dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon1").setAttribute("points",xyt[1][3]);
-	}, 3*dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon1").setAttribute("points",xyt[1][4]);
-	}, 4*dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon1").setAttribute("points",xyt[1][5]);
-	}, 5*dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon1").setAttribute("points",xyt[1][6]);
-	}, 6*dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon1").setAttribute("points",xyt[1][7]);
-	}, 7*dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon1").setAttribute("points",xyt[1][8]);
-	}, 8*dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon1").setAttribute("points",xyt[1][9]);
-	}, 9*dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon1").setAttribute("points",xyt[1][10]);
-	}, 10*dt);
+	fill = "white";
+	if(chr.match(/^(i|j)$/)) {
+	    fill = "black";
+	}
+	addPolyElement(xyt[1][i],fill);
     }
     if(xyt[2]) {
-	setTimeout(function() {
-	    document.getElementById("animPolygon_2").setAttribute("points",xyt[2][0]);
-	}, 0);
-	setTimeout(function() {
-	    document.getElementById("animPolygon2").setAttribute("points",xyt[2][0]);
-	}, 0);
-	setTimeout(function() {
-	    document.getElementById("animPolygon2").setAttribute("points",xyt[2][1]);
-	}, dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon2").setAttribute("points",xyt[2][2]);
-	}, 2*dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon2").setAttribute("points",xyt[2][3]);
-	}, 3*dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon2").setAttribute("points",xyt[2][4]);
-	}, 4*dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon2").setAttribute("points",xyt[2][5]);
-	}, 5*dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon2").setAttribute("points",xyt[2][6]);
-	}, 6*dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon2").setAttribute("points",xyt[2][7]);
-	}, 7*dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon2").setAttribute("points",xyt[2][8]);
-	}, 8*dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon2").setAttribute("points",xyt[2][9]);
-	}, 9*dt);
-	setTimeout(function() {
-	    document.getElementById("animPolygon2").setAttribute("points",xyt[2][10]);
-	}, 10*dt);
+	addPolyElement(xyt[2][i],"white");
+    }
+}
+function setAnimation(xyt,chr) {
+    var it = Math.round(parseInt(document.getElementById("it").value)/10);
+    if(chr != " ") {
+	setPolygonAtTimeInterval(xyt,it,chr);
+    }
+}
+function showTime(msg) {
+    if(debug) {
+	var d = new Date();
+	console.log(msg,(d.getTime()-T0)/1000);
     }
 }

@@ -1,11 +1,16 @@
 var M = 200;
 var X = -50;
 var Y = 50;
+var X0 = 0;
+var Y0 = 0;
+var eps = 1.0;
 var xy1 = [];
+var line1 = [];
 var len1 = [];
 var x1m = [];
 var y1m = [];
 var xy2 = [];
+var line2 = [];
 var len2 = [];
 var x2m = [];
 var y2m = [];
@@ -13,6 +18,9 @@ var dt;
 function fontTransition() {
     var char = prompt("Please input a single character", "H").charAt(0);
     console.log("char:",char);
+    var XY0 = prompt("Set origin, X0,Y0:", "0,0").split(",");
+    X0 = parseInt(XY0[0]);
+    Y0 = parseInt(XY0[1]);
     if(char.match(/^(i|j)$/)) {
 	var fillColor = document.getElementById("animPolygon0").getAttribute("fill");
 	console.log("fill:",fillColor);
@@ -51,6 +59,7 @@ function fontTransition() {
 		    len1.push(length1);
 		    x1m.push(x1mk/(M+1));
 		    y1m.push(y1mk/(M+1));
+
 		}
 	    });
 	    xy1 = reorderArray(xy1,len1,x1m,y1m);
@@ -99,13 +108,52 @@ function getTopLeftIndex(xy) {
     var rmin = 10000000000;
     var topleft = 0;
     xy.forEach(function(item, i) {
-	var rxymin = item.x**2+item.y**2;
+	var rxymin = (item.x-X0)**2+(item.y-Y0)**2;
 	if(rxymin < rmin) {
 	    rmin = rxymin;
 	    topleft = i;
 	}
     });
     return topleft;
+}
+function checkLine(xy) {
+    var L = xy.length;
+    var line = [];
+    xy.forEach(function(item, i) {
+	if(i>0 && i<L-1) {
+	    var a = Math.sqrt((xy[i-1].x-xy[i+1].x)**2+(xy[i-1].y-xy[i+1].y)**2);
+	    var b = Math.sqrt((xy[i-1].x-item.x)**2+(xy[i-1].y-item.y)**2);
+	    var c = Math.sqrt((item.x-xy[i+1].x)**2+(item.y-xy[i+1].y)**2);
+	    var r = (a**2+b**2-c**2)/(2*a*b);
+	    var h = b*Math.sqrt(1-r**2)
+	    if(h < eps) {
+		if(checkSame(xy[i-1].x,item.x,xy[i+1].x)) {
+		    line.push("vline");
+		}
+		else if(checkSame(xy[i-1].y,item.y,xy[i+1].y)) {
+		    line.push("hline");
+		}
+		else {
+		    line.push("line");
+		}
+	    }
+	    else {
+		line.push("curve");
+	    }
+	}
+	else {
+	    line.push("ecurve");
+	}
+    });
+    return line;
+}
+function checkSame(x,y,z) {
+    var flag = false;
+    var r = (Math.abs(x-y)+Math.abs(y-z)+Math.abs(z-x))/3;
+    if(r < eps) {
+	flag = true;
+    }
+    return flag;
 }
 function reorderArray(arr,len,xm,ym) {
     var lenmax = 0;
@@ -145,16 +193,26 @@ function rotateArray(arr) {
     var nextArray = arr.slice(istart);
     return nextArray.concat(prevArray);
 }
+function resetOrigin() {
+    xy2.forEach(function(item, i) {
+	X0 = item[0].x;
+	Y0 = item[0].y;
+	xy1[i] = rotateArray(xy1[i]);
+    });
+}
 function anim() {
+    resetOrigin();
     var speed = parseInt(document.getElementById("speed").value);
     dt = 3000/speed;
     var xyt = [];
     if(xy2.length != xy1.length) {
 	alert("The two glyhs are not homeomorphic!");
     }
-    else { 
+    else {
 	xy1.forEach(function(ktem, k) {
 	    var xytk = [];
+	    line1.push(checkLine(ktem));
+	    line2.push(checkLine(xy2[k]));
 	    for(var it=0; it<11; it++) {
 		var xyti = "";
 		ktem.forEach(function(item, i) {

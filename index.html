@@ -1,26 +1,21 @@
+<!DOCTYPE html>
 <html>
   <head>
     <title>Font transition</title>
     <meta charset="utf-8">
-    <link rel="stylesheet" href="/css/font-transition.css?v=36">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lobster">
+    <link rel="stylesheet" href="/css/font-transition.css?v=4610">
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@latest/dist/opentype.min.js"></script>
-    <script src="/js/lib/raphael.min.js"></script>
-    <script src="/js/set-font-animation.js?v=36"></script>
-    <script src="/js/font-transition.js?v=36"></script>
+    <script src="/js/load-fonts.js?v=4610"></script>
+    <script src="/js/set-font-animation.js?v=4610"></script>
   </head>
-  <body onLoad="fontTransition();">
-    <h1>Font transition</h1>
-    <div id="font-display">
-      <canvas id="canvas2"></canvas>
-      <canvas id="canvas1"></canvas>
-    </div>
+  <body onLoad="loadFonts();">
     <div id="font-transition">
-      <input id="speed" type="number" min="1" max="100" value="10"/>
-      <button onClick="anim();">Show Transition</button>
-      <br>
-      <div id="poly-transition"><svg viewBox="0 0 200 200"><polygon fill="orange" id="animPolygon_0" points="" /><polygon fill="white" id="animPolygon_1" points="" /><polygon fill="white" id="animPolygon_2" points="" /><polygon fill="gold" id="animPolygon0" points="" opacity="0.7"/><polygon fill="white" id="animPolygon1" points="" opacity="0.8"/><polygon fill="white" id="animPolygon2" points="" opacity="0.8"/></svg></div>
+      <div class="config">
+	<input id="chars" value="A Quick Brown Fox Jumped High Over A Lazy Dog (fluttering fine blue butterflies)" />
+	<span>Serif: </span><input id="it" type="number" value="30" max="100"  min="0" step="10" size="1" /><span>%</span>
+	<button id="anim" onClick="animtext();">Display font</button><br>
+      </div>
+      <div id="poly-transition"><svg id="font-display" viewBox="0 0 1000 1000"></svg></div>
     </div>
-    <div class="footnote">You will see intermediate stages of this transition from Linux Biolinum Regular to Linux Libertine Regular soon.</div>
   </body>
 </html>
