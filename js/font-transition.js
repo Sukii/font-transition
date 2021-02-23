@@ -4,7 +4,7 @@ var mM = 100;
 var N = 10;
 var X = 0;
 var Y = -50;
-var R = 1;
+var R = 2;
 var eps = 0.01;
 var debug = false;
 self.addEventListener("message", function(e) {
@@ -19,12 +19,14 @@ self.addEventListener("message", function(e) {
 	var r = anim(pdata1,pdata2,chr,h,v);
 	h += w;
 	if(chr == " ") {
-	    if(h > 800) { h = 0; v += 100/R; }
+	    if(h > 800) { h = 0; v += 200/R; }
 	}
 	self.postMessage({xyt: r.xyt, chr: chr});
     }
 }, false);
 function fontTransition(pds1,pds2,chr) {
+    //console.log("pds1:",pds1);
+    //console.log("pds2:",pds2);
     var xy1 = [];
     var len1 = [];
     var x1m = [];
@@ -33,8 +35,6 @@ function fontTransition(pds1,pds2,chr) {
     var len2 = [];
     var x2m = [];
     var y2m = [];
-    var xy1type = [];
-    var xy2type = [];
     var res1;
     var res2;
     if(chr != " ") {
@@ -44,7 +44,6 @@ function fontTransition(pds1,pds2,chr) {
 	    len1.push(pp.len);
 	    x1m.push(pp.xm);
 	    y1m.push(pp.ym);
-	    xy1type.push(pp.type);
 	});
 	res1 = reorderArray(xy1,len1,x1m,y1m);
 	//-------font2 starts here
@@ -54,11 +53,10 @@ function fontTransition(pds1,pds2,chr) {
 	    len2.push(pp.len);
 	    x2m.push(pp.xm);
 	    y2m.push(pp.ym);
-	    xy2type.push(pp.type);
 	});
 	res2 = reorderArray(xy2,len2,x2m,y2m);
     }
-    return {res1: res1, res2: res2, xy1type: xy1type, xy2type: xy2type };
+    return {res1: res1, res2: res2};
 }
 function getOrigin(chr) {
     var X0 = 0;
@@ -191,38 +189,31 @@ function rotateArray(arr,chr) {
     return nextArray.concat(prevArray);
 }
 function anim(pds1,pds2,chr,h,v) {
-    showTime("anim start:");
     var xyt = [];
     if(chr != " ") {
 	var res = fontTransition(pds1,pds2,chr);
 	var xy1 = res.res1.arr;
 	var xy2 = res.res2.arr;
-	var xy1type = res.xy1type;
-	var xy2type = res.xy2type;
-	//console.log("pds1,pds2:",pds1,pds2);
-	//console.log("xy1,xy2",xy1,xy2);
-	showTime("after fontTransition:");
 	if(xy2.length != xy1.length) {
 	    alert("The two glyhs are not homeomorphic!");
 	}
 	else {
 	    xy1 = resetOriginForXy1(xy1,chr);
 	    var dp = makeDotPolarity(xy1,xy2);
-	    var xy1x = getXy1x(xy1,xy2,xy1type,xy2type,dp,chr);
+	    var xy1x = getXy1x(xy1,xy2,dp,chr);
 	    //console.log("xy1:",xy1);
 	    //console.log("xy2:",xy2);
 	    //console.log("xy1x:",xy1x);
 	    xy2.forEach(function(ktem, k) {
 		var xytk = [];
 		for(var it=0; it<11; it++) {
-		    var xyti = "";
+		    var xyti = [];
 		    ktem.forEach(function(item, i) {
 			var xt = it*xy1x[k][i].x/10 + (10-it)*item.x/10;
 			var yt = it*xy1x[k][i].y/10 + (10-it)*item.y/10;
-			var loc = (xt+h)/R + "," +  (yt+v)/R;
-			xyti += loc + " ";
+			var loc = {x: (xt+h)/R, y: (yt+v)/R, type: xy1x[k][i].type};
+			xyti.push(loc); 
 		    });
-		    xyti = xyti.replace(/ +$/,"");
 		    xytk.push(xyti);
 		}
 		xyt.push(xytk);
@@ -232,8 +223,9 @@ function anim(pds1,pds2,chr,h,v) {
     //console.log(xyt);
     return {xyt: xyt, chr: chr};
 }
-function getXy1x(xy1,xy2,xy1type,xy2type,dp,chr) {
-    //console.log("xy1,xy2:",xy1,xy2);
+function getXy1x(xy1,xy2,dp,chr) {
+    //console.log("xy1:",xy1);
+    //console.log("xy2:",xy2);
     var dot1 = dp.dot1;
     var dot2 = dp.dot2;
     var pol1 = dp.pol1;
@@ -251,6 +243,11 @@ function getXy1x(xy1,xy2,xy1type,xy2type,dp,chr) {
 	ktem.forEach(function(item, i) {
 	    var x = item.x;
 	    var y = item.y;
+	    var type0 = item.type;
+	    var type_1 = xy2[k][L2-1].type;
+	    if(i > 0) {
+		type_1 = xy2[k][i-1].type;
+	    }
 	    var min = 1000000;
 	    var alpha_0 = pol1[k][L1-N][0];
 	    var alpha_1 = pol1[k][L1-N][1];
@@ -277,6 +274,11 @@ function getXy1x(xy1,xy2,xy1type,xy2type,dp,chr) {
 		theta3 = pol2[k][i+1][1];
 	    }
 	    var dtheta = theta1-theta0;
+	    var ddtheta = theta3-theta_0;
+	    if(dtheta > 135)  { dtheta = dtheta - 180; }
+	    if(dtheta < -135)  { dtheta = dtheta + 180; }
+	    if(ddtheta > 135)  { ddtheta = ddtheta - 180; }
+	    if(ddtheta < -135)  { ddtheta = ddtheta + 180; }
 	    var t2 = dir(theta_0) + "," + dir(theta0);
 	    var t2x = dir(theta_0) + "," + dir(theta1);
 	    var t2xx = dir(theta_0) + "," + dir(theta3);
@@ -287,16 +289,16 @@ function getXy1x(xy1,xy2,xy1type,xy2type,dp,chr) {
 	    }
 	    if(flag==0 && (t2.match(/^(-?H,-?(V|L))$/)
 			   || t2x.match(/^(-?H,-?(V|L))$/)
-			  )
+			  ) // (type0.replace(/_/,"") != type_1.replace(/_/,"") && Math.abs(ddtheta) > 70)
 	      ) {
 		flag = 1;
 	    }
 	    var jmax = jmin+N+N2+1;
 	    if(flag > 0) {
-		jmax = jmin+N+N2+1;
+		jmax = jmin+10*N+N2+1;
 		flag++;
 	    }
-	    if(flag > M/50) { flag = 0; }
+	    if(flag > M/25) { flag = 0; }
 	    var js = jmin-N2+1;
 	    if(js < 0) { js = 0; }
 	    for(var j=js; j<jmax && j<M*N-1 && !Q; j++) {
@@ -304,18 +306,30 @@ function getXy1x(xy1,xy2,xy1type,xy2type,dp,chr) {
 		if(jr < 0) { jr = L2 + jr };
 		d = getDistance(xy1[k][jr],item);
 		if(d == 0) { d = eps/1000000;}
-		r = getDistanceY(xy1[k][jr],item);
-		if(t2x.match(/^(H,H|-H,-H)$/) && t2xx.match(/^(H,H|-H,-H)$/)) {
-		    r = getDistanceX(xy1[k][jr],item);
+		if(Q) {
+		    r = d;
+		    if(r < min) {
+			min = r;
+			jm = jr;
+		    }
 		}
-		if(r < min + eps/d) {
-		    min = r;
-		    jm = j;
+		else {
+		    r = getDistanceY(xy1[k][jr],item);
+		    if(t2x.match(/^(H,H|-H,-H)$/) && t2xx.match(/^(H,H|-H,-H)$/)) {
+			r = getDistanceX(xy1[k][jr],item);
+		    }
+		    if(r < min) { //  + eps/d
+			min = r;
+			jm = jr;
+		    }
 		}
 	    }
 	    jmin = jm;
 	    var d = getDistance(xy1[k][jmin],item);
-	    var loc = {x: xy1[k][jmin].x, y: xy1[k][jmin].y};
+	    var ntype = "none";
+	    if(type0 != type_1 && (Math.abs(dtheta) > 1000 || Math.abs(ddtheta) > 70)) { ntype = "x"; }
+	    var loc = {x: xy1[k][jmin].x, y: xy1[k][jmin].y, type: ntype};
+	    //if(type0 != type_1) { console.log("type boundary:",i,jmin,type0,type_1,dtheta); }
 	    xy1xk.push(loc);		
 	    if(jmin < M*N-N-3) {
 		jmin = jmin +  N;
@@ -396,13 +410,13 @@ function getSlopeFromFromTwoPoints(xya,xyb) {
     if(dx != 0) {
 	m = dy/dx;
     }
-    if(Math.abs(m) > 4) {
+    if(Math.abs(m) > 4 && dy != 0) {
 	m = Math.abs(m)*(dy/Math.abs(dy));
     }
-    if(Math.abs(m) < 0.5) {
+    if(Math.abs(m) < 0.5 && dx != 0) {
 	m = Math.abs(m)*(dx/Math.abs(dx));
     }
-    if(m == 0) {
+    if(m == 0 && dx != 0) {
 	m = 0.000000001*(dx/Math.abs(dx));
     }
     return m;
@@ -427,7 +441,6 @@ function createSVGPath(d) {
     return p;
 }
 function getPathPoints(pd,K) {
-    //console.log("getPathPoints pd:",pd);
     var xy = [];
     var r0 = {x: 0, y: 0 };
     var len = [];
@@ -479,7 +492,6 @@ function getPathPoints(pd,K) {
     });
     //---create m = (len[i]/L)*K points uniformly along the sub-paths    
     var xy = [];
-    var xytype = [];
     //console.log("L:",L);
     var mt = 0;
     var r0 = {x: 0, y: 0 };
@@ -499,11 +511,13 @@ function getPathPoints(pd,K) {
 	    var r3 = { x: item.x, y: item.y};
 	    if(mt > K-5 && mt < K) { m = m+(K-mt); }
 	    //console.log("Cubicx:",i,r0,r1,r2,r3,m)
+	    var ty = "C";
 	    for(var i=0; i<m; i++) {
 		var t = i;
 		if(m > 1) { t = i/(m-1); };
-		xy.push(getPointInCubicBrezier(r0,r1,r2,r3,t));
-		xytype.push("C");
+		var r = getPointInCubicBrezier(r0,r1,r2,r3,t);
+		if(i == m-1) { ty = "C_"; }
+		xy.push({x: r.x, y: r.y, type: ty});
 	    }
 	    r0 = r3;
 	}
@@ -512,11 +526,13 @@ function getPathPoints(pd,K) {
 	    var r2 = { x: item.x, y: item.y};
 	    if(mt > K-5 && mt < K) { m = m+(K-mt); }
 	    //console.log("Quadraticx:",i,r0,r1,r2,m)
+	    var ty = "Q";
 	    for(var i=0; i<m; i++) {
 		var t = i;
 		if(m > 1) { t = i/(m-1); };
-		xy.push(getPointInQuadraticBrezier(r0,r1,r2,t));
-		xytype.push("Q");
+		var r = getPointInQuadraticBrezier(r0,r1,r2,t);
+		if(i == m-1) { ty = "Q_"; }
+		xy.push({x: r.x, y: r.y, type: ty});
 	    }
 	    r0 = r2;
 	}
@@ -524,11 +540,13 @@ function getPathPoints(pd,K) {
 	    var r1 = { x: item.x, y: item.y};
 	    if(mt > K-5 && mt < K) { m = m+(K-mt); }
 	    //console.log("Linearx:",i,r0,r1,m)
+	    var ty = "L";
 	    for(var i=0; i<m; i++) {
 		var t = i;
 		if(m > 1) { t = i/(m-1); };
-		xy.push(getPointInLine(r0,r1,t));
-		xytype.push("L");
+		var r = getPointInLine(r0,r1,t);
+		if(i == m-1) { ty = "L_"; }
+		xy.push({x: r.x, y: r.y, type: ty});
 	    }
 	    r0 = r1;
 	}
@@ -542,7 +560,7 @@ function getPathPoints(pd,K) {
     xm = xm/xy.length;
     ym = ym/xy.length;
     //console.log("getPathPoints xy:",xy);
-    return {xy: xy, len: L, xm: xm, ym: ym, type: xytype};
+    return {xy: xy, len: L, xm: xm, ym: ym};
 }
 function getPointInCubicBrezier(r0,r1,r2,r3,t) {
     var u = 1 - t;

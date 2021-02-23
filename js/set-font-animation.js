@@ -37,21 +37,28 @@ function addPolyElement(points, fill) {
 }
 function setPolygonAtTimeInterval(xyt,i,chr) {
     var fill = "black";
-    addPolyElement(xyt[0][i],fill);
+    addPolyElement(pointsFromXy(xyt[0][i],fill).points.join(" "));
     if(xyt[1]) {
 	fill = "white";
 	if(chr.match(/^(i|j)$/)) {
 	    fill = "black";
 	}
-	addPolyElement(xyt[1][i],fill);
+	addPolyElement(pointsFromXy(xyt[1][i],fill).points.join(" "),fill);
     }
     if(xyt[2]) {
-	addPolyElement(xyt[2][i],"white");
+	addPolyElement(pointsFromXy(xyt[2][i],fill).points.join(" "),"white");
     }
+    /*
+    fill = "none";
+    pointsFromXy(xyt[0][i],fill).xpoints.forEach(function(item, i) {
+	addCircleElement(item.x,item.y,2,fill)
+    });
+    */
 }
 function setAnimation(xyt,chr) {
     var it = Math.round(parseInt(document.getElementById("it").value)/10);
     if(chr != " ") {
+	//console.log("xyt:",xyt);
 	setPolygonAtTimeInterval(xyt,it,chr);
     }
 }
@@ -61,3 +68,38 @@ function showTime(msg) {
 	console.log(msg,(d.getTime()-T0)/1000);
     }
 }
+function addCircleElement(cxv,cyv,rv,fill) {
+    var tnode =  document.getElementById("font-display");
+    var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    var cx = document.createAttribute("cx");
+    cx.value = cxv;
+    var cy = document.createAttribute("cy");
+    cy.value = cyv;
+    var r = document.createAttribute("r");
+    r.value = rv;
+    var fl = document.createAttribute("fill");
+    fl.value = fill;
+    circle.setAttributeNode(cx);
+    circle.setAttributeNode(cy);
+    circle.setAttributeNode(r);
+    circle.setAttributeNode(fl);
+    tnode.appendChild(circle);
+}
+function pointsFromXy(arr) {
+    var points = [];
+    var xpoints = [];
+    arr.forEach(function(item, i) {
+	var xy = item.x + "," + item.y
+	points.push(xy);
+	if(item.type == "x") {
+	    xpoints.push(item);
+	}
+    });
+    return {points: points, xpoints: xpoints}
+}
+
+
+
+
+
+

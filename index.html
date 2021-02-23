@@ -3,16 +3,16 @@
   <head>
     <title>Font transition</title>
     <meta charset="utf-8">
-    <link rel="stylesheet" href="/css/font-transition.css?v=4610">
+    <link rel="stylesheet" href="/css/font-transition.css?v=4867">
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@latest/dist/opentype.min.js"></script>
-    <script src="/js/load-fonts.js?v=4610"></script>
-    <script src="/js/set-font-animation.js?v=4610"></script>
+    <script src="/js/load-fonts.js?v=4867"></script>
+    <script src="/js/set-font-animation.js?v=4867"></script>
   </head>
   <body onLoad="loadFonts();">
     <div id="font-transition">
       <div class="config">
-	<input id="chars" value="A Quick Brown Fox Jumped High Over A Lazy Dog (fluttering fine blue butterflies)" />
-	<span>Serif: </span><input id="it" type="number" value="30" max="100"  min="0" step="10" size="1" /><span>%</span>
+	<input id="chars" value="A Quick Brown Fox Jumped High Over A Lazy Dog (fluttering fine blue butterflies)." />
+	Serif : <input id="it" type="number" value="30" max="100"  min="0" step="10" size="1" />%
 	<button id="anim" onClick="animtext();">Display font</button><br>
       </div>
       <div id="poly-transition"><svg id="font-display" viewBox="0 0 1000 1000"></svg></div>
