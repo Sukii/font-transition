@@ -73,7 +73,7 @@ function setAnimation(xyts,chrs) {
 	}
 	var wd = 0;
 	if(chr != "\n") {
-	    wd = w["uni" + chr.charCodeAt(0)];
+	    wd = 0.1*(10-it)*w2["uni" + chr.charCodeAt(0)]+0.1*it*w1["uni" + chr.charCodeAt(0)];
 	}
 	h += wd;
     }

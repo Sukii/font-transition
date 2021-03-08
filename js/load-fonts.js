@@ -4,7 +4,8 @@ var da = new Date();
 var T0 = da.getTime();
 var pd1 = {};
 var pd2 = {};
-var w = {};
+var w1 = {};
+var w2 = {};
 var debug = false;
 var xyts;
 var intId;
@@ -36,7 +37,8 @@ function sliceClosedCurves(pd) {
 function loadFonts() {
     pd1 = {};
     pd2 = {};
-    w = {};
+    w1 = {};
+    w2 = {};
     var fff1 = "LinLibertine_R.otf";
     var fff2 = "LinBiolinum_R.otf";
     var chrs = document.getElementById("chars").value.trim();
@@ -83,6 +85,8 @@ function loadFonts() {
 	    var chr = String.fromCharCode(glyph.unicode);
 	    var spdc = sliceClosedCurves(pdc);
 	    pd1["uni"+glyph.unicode] = spdc;
+	    var options = { decimalPlaces: 4 };
+	    w1["uni"+glyph.unicode] = font1.getAdvanceWidth(chr, 72, options);
 	};
     });
     opentype.load('/fonts/' + fff2, function(err, font) {
@@ -98,7 +102,7 @@ function loadFonts() {
 	    var spdc = sliceClosedCurves(pdc);
 	    pd2["uni"+glyph.unicode] = spdc;
 	    var options = { decimalPlaces: 4 };
-	    w["uni"+glyph.unicode] = font2.getAdvanceWidth(chr, 72, options);
+	    w2["uni"+glyph.unicode] = font2.getAdvanceWidth(chr, 72, options);
 	};
     });
     intId = setInterval(function() {
@@ -109,7 +113,7 @@ function loadFonts() {
 	    animtext();
 	}
     },1000);
-    worker1 = new Worker('/js/font-transition-v382.js');
+    worker1 = new Worker('/js/font-transition.js');
     worker1.addEventListener('message', function(e) {
 	xyts = e.data.xyts;
 	chrs = e.data.chars;
