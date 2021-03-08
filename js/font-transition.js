@@ -4,29 +4,31 @@ var mM = 100;
 var N = 10;
 var X = 0;
 var Y = -50;
-var R = 2;
+var R = 1;
 var eps = 0.01;
 var debug = false;
 self.addEventListener("message", function(e) {
-    var chars = e.data.chars;
-    var h = 0;
-    var v = Y;
-    for(var i=0; i<chars.length; i++) {
-	var chr = chars[i];
-	var pdata1 = e.data.pd1["uni" + chr.charCodeAt(0)];
-	var pdata2 = e.data.pd2["uni" + chr.charCodeAt(0)];
-	var w = e.data.w["uni" + chr.charCodeAt(0)];
-	var r = anim(pdata1,pdata2,chr,h,v);
-	h += w;
-	if(chr == " ") {
-	    if(h > 800) { h = 0; v += 200/R; }
+    var chrs = e.data.chars;
+    var MD = e.data.MD;
+    var K = e.data.K;
+    var DANG = e.data.DANG;
+    M = e.data.M;
+    N = e.data.N;
+    var xyts = [];
+    var chs = [];
+    for(var i=0; i<chrs.length; i++) {
+	var chr = chrs[i];
+	if(chs.indexOf(chr) == -1) {
+	    chs.push(chr);
+	    var pdata1 = e.data.pd1["uni" + chr.charCodeAt(0)];
+	    var pdata2 = e.data.pd2["uni" + chr.charCodeAt(0)];
+	    var r = anim(pdata1,pdata2,chr,MD,K,DANG);
+	    xyts.push(r.xyt);
 	}
-	self.postMessage({xyt: r.xyt, chr: chr});
     }
+    self.postMessage({xyts: xyts, chars: chrs});
 }, false);
 function fontTransition(pds1,pds2,chr) {
-    //console.log("pds1:",pds1);
-    //console.log("pds2:",pds2);
     var xy1 = [];
     var len1 = [];
     var x1m = [];
@@ -35,6 +37,9 @@ function fontTransition(pds1,pds2,chr) {
     var len2 = [];
     var x2m = [];
     var y2m = [];
+    var y2m = [];
+    var ln1 = [];
+    var ln2 = [];
     var res1;
     var res2;
     if(chr != " ") {
@@ -44,8 +49,9 @@ function fontTransition(pds1,pds2,chr) {
 	    len1.push(pp.len);
 	    x1m.push(pp.xm);
 	    y1m.push(pp.ym);
+	    ln1.push(pp.ln);
 	});
-	res1 = reorderArray(xy1,len1,x1m,y1m);
+	res1 = reorderArray(xy1,len1,x1m,y1m,ln1);
 	//-------font2 starts here
 	pds2.forEach(function(item, k) {
 	    var pp = getPathPoints(item,M);
@@ -53,8 +59,9 @@ function fontTransition(pds1,pds2,chr) {
 	    len2.push(pp.len);
 	    x2m.push(pp.xm);
 	    y2m.push(pp.ym);
+	    ln2.push(pp.ln);
 	});
-	res2 = reorderArray(xy2,len2,x2m,y2m);
+	res2 = reorderArray(xy2,len2,x2m,y2m,ln2);
     }
     return {res1: res1, res2: res2};
 }
@@ -74,12 +81,48 @@ function getOrigin(chr) {
     }
     return {x: X0, y: Y0};
 }
-function getAnimMode(chr) {
-    var Q = false;
-    if(chr.match(/^(c|e|g|o|s|t|B|C|O|S|Q|J)$/)) {
+function getAnimMode(chr,ln,len1,len2,pol,MF,DANG) {
+    var hv = 0;
+    var cn = 0;
+    pol.forEach(function(item, i) {
+	var o = getOrientations(pol,MF,i);
+	if(o.t1.match(/^(-?H|-?V)$/)) {
+	    hv++;
+	}
+	var tf = o.t_1 + o.t2;
+	if(tf.match(/^(-?H-?V|-?V-?H)$/)
+	  || o.dalpha > DANG ) {
+	    cn++;
+	}
+    });
+    var Q = true;
+    if(chr.match(/[^ijcegosCOQ]$/)) {
+	Q = false;
+    }
+    var hf = hv/(pol.length + 0.0001);
+    var lf = ln.ll/(ln.lc + ln.lq + 0.0001);
+    if(lf > 0.1
+       || hf > 0.5) {
+	Q = false;
+    }
+    if(chr.match(/[^a-zA-Z]/)) {
 	Q = true;
     }
-    return Q;
+    var KF = factor(cn,lf,hf,len1,len2);
+    return {flag: Q, KF: KF};
+}
+function factor(cn,lf,hf,len1,len2) {
+    var KF = 1;
+    if(lf > 0.1 && hf > 0.1) {
+	if(len2 > 0) {
+	    KF = 2*(len1/len2);
+	}
+    }
+    if(cn > 0) {
+	KF = KF/cn;
+    }
+    console.log(cn,lf,hf,len1/len2,KF);
+    return KF;
 }
 function makeDotPolarity(xy1,xy2) {
     function makePolarityArray(arr) {
@@ -130,8 +173,7 @@ function getTopLeftIndex(xy,X0,Y0) {
     });
     return topleft;
 }
-function reorderArray(arr,len,xm,ym) {
-    //console.log("before reorder:",arr,len,xm,ym);
+function reorderArray(arr,len,xm,ym,ln) {
     var lenmax = 0;
     var ilenmax = 0;
     len.forEach(function(item,i) {
@@ -144,28 +186,33 @@ function reorderArray(arr,len,xm,ym) {
     var newlen = [];
     var newxm = [];
     var newym = [];
+    var newln = [];
     newarr.push(arr[ilenmax]);
     newlen.push(len[ilenmax]);
     newxm.push(xm[ilenmax]);
     newym.push(ym[ilenmax]);
+    newln.push(ln[ilenmax]);
     len.forEach(function(item,i) {
 	if(i != ilenmax) {
-	    newarr.push(arr[i])
-	    newlen.push(len[i])
-	    newxm.push(xm[i])
-	    newym.push(ym[i])
+	    newarr.push(arr[i]);
+	    newlen.push(len[i]);
+	    newxm.push(xm[i]);
+	    newym.push(ym[i]);
+	    newln.push(ln[i]);
 	}
     });
     if(ym.length == 3) {
+	var narr1 = newarr[1];
+	var narr2 = newarr[2];
 	var nlen1 = newlen[1];
 	var nlen2 = newlen[2];
 	var nxm1 = newxm[1];
 	var nxm2 = newxm[2];
 	var nym1 = newym[1];
 	var nym2 = newym[2];
+	var nln1 = newln[1];
+	var nln2 = newln[2];
 	if(nym2 < nym1) {
-	    var narr1 = newarr[1];
-	    var narr2 = newarr[2];
 	    newarr[2] = narr1;
 	    newarr[1] = narr2;
 	    newxm[2] = nxm1;
@@ -174,12 +221,14 @@ function reorderArray(arr,len,xm,ym) {
 	    newym[1] = nym2;
 	    newlen[2] = nlen1;
 	    newlen[1] = nlen2;	    
+	    newln[2] = nln1;
+	    newln[1] = nln2;	    
 	}
     }
-    //console.log("reorder:",arr,len,xm,ym);
-    return {arr: newarr, len: newlen, xm: newxm, ym: newym };
+    return {arr: newarr, len: newlen, xm: newxm, ym: newym, ln: newln };
 }
 function rotateArray(arr,chr) {
+    arr = makeArrayDistinct(arr);
     var r = getOrigin(chr);
     var X0 = r.x;
     var Y0 = r.y;
@@ -188,22 +237,38 @@ function rotateArray(arr,chr) {
     var nextArray = arr.slice(istart);
     return nextArray.concat(prevArray);
 }
-function anim(pds1,pds2,chr,h,v) {
+function makeArrayDistinct(arr) {
+    var L = arr.length;
+    arr.forEach(function(item,i) {
+	if(i > 0) {
+	    var i1 = i+1 ;
+	    if(i == L-1) { i1 = 0; }
+	    if(arr[i-1].x == item.x && arr[i-1].y == item.y) {
+		item.x = arr[i1].x*0.01+item.x*0.99;
+		item.y = arr[i1].y*0.01+item.y*0.99;
+	    }
+	}
+    });
+    return arr;
+}
+function anim(pds1,pds2,chr,MF,K,DANG) {
     var xyt = [];
-    if(chr != " ") {
+    if(chr != " " && chr != "\n") {
 	var res = fontTransition(pds1,pds2,chr);
 	var xy1 = res.res1.arr;
 	var xy2 = res.res2.arr;
+	var len1 = res.res1.len;
+	var len2 = res.res2.len;
+	var ln1 = res.res1.ln;
+	var ln2 = res.res2.ln;
 	if(xy2.length != xy1.length) {
-	    alert("The two glyhs are not homeomorphic!");
+	    console.log("The two glyhs of " + chr + " are not homeomorphic!");
+	    console.log("xy1,xy2;",xy1,xy2);
 	}
 	else {
 	    xy1 = resetOriginForXy1(xy1,chr);
 	    var dp = makeDotPolarity(xy1,xy2);
-	    var xy1x = getXy1x(xy1,xy2,dp,chr);
-	    //console.log("xy1:",xy1);
-	    //console.log("xy2:",xy2);
-	    //console.log("xy1x:",xy1x);
+	    var xy1x = getXy1x(xy1,xy2,ln1,ln2,len1,len2,dp,chr,MF,K,DANG);
 	    xy2.forEach(function(ktem, k) {
 		var xytk = [];
 		for(var it=0; it<11; it++) {
@@ -211,7 +276,7 @@ function anim(pds1,pds2,chr,h,v) {
 		    ktem.forEach(function(item, i) {
 			var xt = it*xy1x[k][i].x/10 + (10-it)*item.x/10;
 			var yt = it*xy1x[k][i].y/10 + (10-it)*item.y/10;
-			var loc = {x: (xt+h)/R, y: (yt+v)/R, type: xy1x[k][i].type};
+			var loc = {x: xt, y: yt, type: xy1x[k][i].type};
 			xyti.push(loc); 
 		    });
 		    xytk.push(xyti);
@@ -220,124 +285,112 @@ function anim(pds1,pds2,chr,h,v) {
 	    });
 	}
     }
-    //console.log(xyt);
     return {xyt: xyt, chr: chr};
 }
-function getXy1x(xy1,xy2,dp,chr) {
-    //console.log("xy1:",xy1);
-    //console.log("xy2:",xy2);
+function getXy1x(xy1,xy2,ln1,ln2,len1,len2,dp,chr,MF,K,DANG) {
     var dot1 = dp.dot1;
     var dot2 = dp.dot2;
     var pol1 = dp.pol1;
     var pol2 = dp.pol2;
-    var Q = getAnimMode(chr);
     xy1x = [];
     xy2.forEach(function(ktem, k) {
+	var re = getAnimMode(chr,ln2[k],len1[k],len2[k],pol2[k],MF,DANG);
+	var Q = re.flag;
 	if(k > 0) { Q = true; }
+	var KF = re.KF;
+	console.log("chr,Q:", chr,Q);
 	var N2 = Math.round(N/2);
-	var jmin = 0;
-	xy1xk = [];
+	var jmt = 0;
+	var jm = 0;
+	var xy1xk = [];
 	var L2 = ktem.length;
 	var L1 = xy1[k].length;
-	var flag = 0;
 	ktem.forEach(function(item, i) {
 	    var x = item.x;
 	    var y = item.y;
-	    var type0 = item.type;
-	    var type_1 = xy2[k][L2-1].type;
-	    if(i > 0) {
-		type_1 = xy2[k][i-1].type;
-	    }
 	    var min = 1000000;
-	    var alpha_0 = pol1[k][L1-N][0];
-	    var alpha_1 = pol1[k][L1-N][1];
-	    if(jmin > N-1) {
-		alpha_0 = pol1[k][jmin-N][0];
-		alpha_1 = pol1[k][jmin-N][1];
-	    }
-	    var alpha0 = pol1[k][jmin][0];
-	    var alpha1 = pol1[k][jmin][1];
-	    var dalpha = alpha1-alpha0;
-	    var t1 = dir(alpha_0) + "," + dir(alpha0);
-	    var theta_0 = pol2[k][L2-1][0];
-	    var theta_1 = pol2[k][L2-1][1];
-	    if(i > 0) {
-		theta_0 = pol2[k][i-1][0];
-		theta_1 = pol2[k][i-1][1];
-	    }
-	    var theta0 = pol2[k][i][0];
-	    var theta1 = pol2[k][i][1];
-	    var theta2 = 0;
-	    var theta3 = 0;
-	    if(i < L2-1) {
-		theta2 = pol2[k][i+1][0];
-		theta3 = pol2[k][i+1][1];
-	    }
-	    var dtheta = theta1-theta0;
-	    var ddtheta = theta3-theta_0;
-	    if(dtheta > 135)  { dtheta = dtheta - 180; }
-	    if(dtheta < -135)  { dtheta = dtheta + 180; }
-	    if(ddtheta > 135)  { ddtheta = ddtheta - 180; }
-	    if(ddtheta < -135)  { ddtheta = ddtheta + 180; }
-	    var t2 = dir(theta_0) + "," + dir(theta0);
-	    var t2x = dir(theta_0) + "," + dir(theta1);
-	    var t2xx = dir(theta_0) + "," + dir(theta3);
-	    var jm = jmin;
-	    var item1 = xy2[k][L2-1];
-	    if(i > 0) {
-		item1 = xy2[k][i-1];
-	    }
-	    if(flag==0 && (t2.match(/^(-?H,-?(V|L))$/)
-			   || t2x.match(/^(-?H,-?(V|L))$/)
-			  ) // (type0.replace(/_/,"") != type_1.replace(/_/,"") && Math.abs(ddtheta) > 70)
-	      ) {
-		flag = 1;
-	    }
-	    var jmax = jmin+N+N2+1;
-	    if(flag > 0) {
-		jmax = jmin+10*N+N2+1;
-		flag++;
-	    }
-	    if(flag > M/25) { flag = 0; }
-	    var js = jmin-N2+1;
-	    if(js < 0) { js = 0; }
-	    for(var j=js; j<jmax && j<M*N-1 && !Q; j++) {
-		jr = j;
-		if(jr < 0) { jr = L2 + jr };
-		d = getDistance(xy1[k][jr],item);
-		if(d == 0) { d = eps/1000000;}
-		if(Q) {
-		    r = d;
-		    if(r < min) {
-			min = r;
-			jm = jr;
-		    }
+	    //console.log(pol2[k],MF,i);
+	    var o2 = getOrientations(pol2[k],MF,i);
+	    var flag2 = o2.t0+o2.t1;
+	    var flag2x = o2.t_1+o2.t2;
+	    var jmax = i*N+K*N*KF;
+	    var mode = "none";
+	    for(var j=jmt; j<jmax && j<M*N-1 && !Q; j++) {
+		var o1 = getOrientations(pol1[k],N,j);
+		var flag1 = o1.t0+o1.t1;
+		var flag1x = o1.t_1+o1.t2;
+		var d = getDistance(xy1[k][j],item);
+		var ry = getDistanceY(xy1[k][j],item);
+		var rx = getDistanceX(xy1[k][j],item);
+		if(flag2x.match(/^(HH|-H-H)$/)) {
+		    r = rx + 0.1*ry;
+		    mode = "h";
 		}
 		else {
-		    r = getDistanceY(xy1[k][jr],item);
-		    if(t2x.match(/^(H,H|-H,-H)$/) && t2xx.match(/^(H,H|-H,-H)$/)) {
-			r = getDistanceX(xy1[k][jr],item);
-		    }
-		    if(r < min) { //  + eps/d
-			min = r;
-			jm = jr;
-		    }
+		    r = ry + 0.1*rx;
+		    mode = "v";
+		}
+		if(r < min) {
+		    min = r;
+		    jm = j;
 		}
 	    }
-	    jmin = jm;
-	    var d = getDistance(xy1[k][jmin],item);
+	    var o1 = getOrientations(pol1[k],N,jm);
+	    //console.log("i,jm,flag1,flag2,min,mode,jm,o1,o2,xy1,xy2:",i,jm,flag1,flag2,min,mode,o1,o2,xy1[k][jm],xy2[k][i]);
 	    var ntype = "none";
-	    if(type0 != type_1 && (Math.abs(dtheta) > 1000 || Math.abs(ddtheta) > 70)) { ntype = "x"; }
-	    var loc = {x: xy1[k][jmin].x, y: xy1[k][jmin].y, type: ntype};
-	    //if(type0 != type_1) { console.log("type boundary:",i,jmin,type0,type_1,dtheta); }
-	    xy1xk.push(loc);		
-	    if(jmin < M*N-N-3) {
-		jmin = jmin +  N;
+	    if((Math.abs(o1.dalpha) > (DANG-20) && Math.abs(o1.ddalpha) > DANG)
+	       && (Math.abs(o2.dalpha) > (DANG-20) && Math.abs(o2.ddalpha) > DANG)
+	      ) {
+		if(i > 1 && i < xy2[k].length-2) {
+		    //console.log(i,"x2:",o1,o2,xy2[k][i-2],xy2[k][i-1],xy2[k][i],xy2[k][i+1],xy2[k][i+2]);
+		}
+		else {
+		    //console.log("none");
+		}
+		ntype = "x";
 	    }
+	    /*
+	    if(flag2.match(/^(HH|-H-H)$/)) {
+	    	ntype = "x";
+	    }*/
+	    var loc = {x: xy1[k][jm].x, y: xy1[k][jm].y, type: ntype};
+	    xy1xk.push(loc);
+	    if(Q) { jm += N; }
+	    jmt = jm + 1;
 	});
 	xy1x.push(xy1xk);
     });
     return xy1x;
+}
+function normalize(theta) {
+    if(theta > 90) { theta = 180 - theta; }
+    if(theta < -90) { theta = 180 + theta; }
+    return theta;
+}
+function getOrientations(polk,m,p) {
+    var L = polk.length;
+    var alpha_1 = polk[L-m][0];
+    if(alpha_1 == 1111111) { alpha_1 = polk[L-m-1][0]; } 
+    if(p > m-1) {
+	alpha_1 = polk[p-m][0];
+	if(alpha_1 == 1111111 && p > m) { alpha_1 = polk[p-m-1][0]; } 
+    }
+    //console.log("m,p,polk:",m,p,polk);
+    var alpha0 = polk[p][0];
+    if(alpha0 == 1111111) { alpha0 = alpha_1; } 
+    var alpha1 = polk[p][1];
+    if(alpha1 == 1111111) { alpha1 = alpha0; } 
+    var alpha2;
+    if(p < L-m) {
+	alpha2 = polk[p+m][1];
+    }
+    else {
+	alpha2 = polk[p+m-L][1];
+    }
+    if(alpha2 == 1111111) { alpha2 = alpha1; } 
+    var dalpha = normalize(alpha1-alpha0);
+    var ddalpha = normalize(alpha2-alpha_1);
+    return { alpha_1: alpha_1, alpha0: alpha0, alpha1: alpha1, alpha2: alpha2, dalpha: dalpha, ddalpha: ddalpha, t_1: dir(alpha_1), t0: dir(alpha0), t1: dir(alpha1), t2: dir(alpha2) };
 }
 function resetOriginForXy1(xy1,chr) {
     var r = getOrigin(chr);
@@ -353,7 +406,7 @@ function resetOriginForXy1(xy1,chr) {
     return xy1;
 }
 function dir(t) {
-    var del = 15;
+    var del = 10;
     var foo = "L";
     if(Math.abs(t+90) < del) {
 	foo = "-V";
@@ -381,8 +434,10 @@ function getDistanceY(xyA1,xyA2) {
 }
 function getPolarity(xyA1,xyA2,xyB1,xyB2) {
     var ang = [];
-    ang.push(getAngleFromSlope(getSlopeFromFromTwoPoints(xyA1,xyA2)));
-    ang.push(getAngleFromSlope(getSlopeFromFromTwoPoints(xyB1,xyB2)));
+    var m1 = getSlopeFromFromTwoPoints(xyA1,xyA2);
+    var m2 = getSlopeFromFromTwoPoints(xyB1,xyB2);
+    ang.push(getAngleFromSlope(m1));
+    ang.push(getAngleFromSlope(m2));
     return ang;
 }
 function dotproduct(xyA1,xyA2,xyB1,xyB2) {
@@ -407,6 +462,7 @@ function getSlopeFromFromTwoPoints(xya,xyb) {
     xyb.y = Math.round(xyb.y*10000)/10000;
     var dx = xyb.x-xya.x;
     var dy = xyb.y-xya.y;
+    if(dx == 0 && dy == 0) { m = 1111111; }
     if(dx != 0) {
 	m = dy/dx;
     }
@@ -422,9 +478,10 @@ function getSlopeFromFromTwoPoints(xya,xyb) {
     return m;
 }
 function getAngleFromSlope(m) {
-    var theta = (180/Math.PI)*Math.atan(m);
-    //if(theta < 0) { theta += 180; }
-    //if(theta > 135) { theta = theta - 180; }
+    var theta = 1111111;
+    if(m != 1111111) {
+	theta = (180/Math.PI)*Math.atan(m);
+    }
     return theta;
 }
 function showTime(msg) {
@@ -444,6 +501,9 @@ function getPathPoints(pd,K) {
     var xy = [];
     var r0 = {x: 0, y: 0 };
     var len = [];
+    var lc = 0;
+    var lq = 0;
+    var ll = 0;
     for(var i in pd) {
 	var item = pd[i];
 	if(item.type == "M") {
@@ -460,6 +520,7 @@ function getPathPoints(pd,K) {
 	    var L2 =  getDistance(r0,r1)+getDistance(r1,r2)+getDistance(r2,r3);
 	    var L = 2*L2/3 + L1/3;
 	    len.push(L);
+	    lc += L;
 	    r0 = r3;
 	}
 	else if(item.type == "Q") {
@@ -469,12 +530,14 @@ function getPathPoints(pd,K) {
 	    var L2 =  getDistance(r0,r1)+getDistance(r1,r2);
 	    var L = 2*L2/3 + L1/3;
 	    len.push(L);
+	    lq += L;
 	    r0 = r2;
 	}
 	else if(item.type == "L") {
 	    var r1 = {x: item.x, y: item.y };
 	    var L = getDistance(r0,r1);
 	    len.push(L);
+	    ll += L;
 	    r0 = r1;
 	}
 	else if(item.type == "Z") {
@@ -490,17 +553,31 @@ function getPathPoints(pd,K) {
     len.forEach( function(item, i) {
 	L += item;
     });
+    var fmt = 0;
+    var mt = [];
+    len.forEach( function(item, i) {
+	fmt += item*K/L;
+	mt.push(Math.round(fmt));
+    });
+    var m = [];
+    var ml = 0;
+    mt.forEach( function(item, i) {
+	if(i == 0) {
+	    m.push(mt[0]);
+	    ml += mt[0];
+	}
+	else {
+	    m.push(item-mt[i-1]);
+	    ml += item-mt[i-1];
+	}
+    });
+    //console.log(ml,m);
     //---create m = (len[i]/L)*K points uniformly along the sub-paths    
     var xy = [];
     //console.log("L:",L);
-    var mt = 0;
     var r0 = {x: 0, y: 0 };
-    for(var i in pd) {
-	var item = pd[i];
-    	var m = Math.round(K*len[i]/L);
-	if(m > 0) { m = Math.ceil(K*len[i]/L); }
-	mt += m;
-	if(mt > K) { m = m-(mt-K); }
+    for(var k in pd) {
+	var item = pd[k];
 	if(item.type == "M") {
 	    r0.x = item.x;
 	    r0.y = item.y;
@@ -509,12 +586,11 @@ function getPathPoints(pd,K) {
 	    var r1 = { x: item.x1, y: item.y1};
 	    var r2 = { x: item.x2, y: item.y2};
 	    var r3 = { x: item.x, y: item.y};
-	    if(mt > K-5 && mt < K) { m = m+(K-mt); }
 	    //console.log("Cubicx:",i,r0,r1,r2,r3,m)
 	    var ty = "C";
-	    for(var i=0; i<m; i++) {
+	    for(var i=0; i<m[k]; i++) {
 		var t = i;
-		if(m > 1) { t = i/(m-1); };
+		if(m[k] > 1) { t = i/(m[k]-1); };
 		var r = getPointInCubicBrezier(r0,r1,r2,r3,t);
 		if(i == m-1) { ty = "C_"; }
 		xy.push({x: r.x, y: r.y, type: ty});
@@ -524,28 +600,26 @@ function getPathPoints(pd,K) {
 	else if(item.type == "Q") {
 	    var r1 = { x: item.x1, y: item.y1};
 	    var r2 = { x: item.x, y: item.y};
-	    if(mt > K-5 && mt < K) { m = m+(K-mt); }
 	    //console.log("Quadraticx:",i,r0,r1,r2,m)
 	    var ty = "Q";
-	    for(var i=0; i<m; i++) {
+	    for(var i=0; i<m[k]; i++) {
 		var t = i;
-		if(m > 1) { t = i/(m-1); };
+		if(m[k] > 1) { t = i/(m[k]-1); };
 		var r = getPointInQuadraticBrezier(r0,r1,r2,t);
-		if(i == m-1) { ty = "Q_"; }
+		if(i == m[k]-1) { ty = "Q_"; }
 		xy.push({x: r.x, y: r.y, type: ty});
 	    }
 	    r0 = r2;
 	}
  	else if(item.type == "L") {
 	    var r1 = { x: item.x, y: item.y};
-	    if(mt > K-5 && mt < K) { m = m+(K-mt); }
 	    //console.log("Linearx:",i,r0,r1,m)
 	    var ty = "L";
-	    for(var i=0; i<m; i++) {
+	    for(var i=0; i<m[k]; i++) {
 		var t = i;
-		if(m > 1) { t = i/(m-1); };
+		if(m[k] > 1) { t = i/(m[k]-1); };
 		var r = getPointInLine(r0,r1,t);
-		if(i == m-1) { ty = "L_"; }
+		if(i == m[k]-1) { ty = "L_"; }
 		xy.push({x: r.x, y: r.y, type: ty});
 	    }
 	    r0 = r1;
@@ -559,8 +633,11 @@ function getPathPoints(pd,K) {
     });
     xm = xm/xy.length;
     ym = ym/xy.length;
-    //console.log("getPathPoints xy:",xy);
-    return {xy: xy, len: L, xm: xm, ym: ym};
+    if(xy.length != M && xy.length != M*N) {
+	console.log("Len:",xy.length);
+    }
+    var ln = { lc: lc, lq: lq, ll: ll};
+    return {xy: xy, len: L, xm: xm, ym: ym, ln: ln};
 }
 function getPointInCubicBrezier(r0,r1,r2,r3,t) {
     var u = 1 - t;
