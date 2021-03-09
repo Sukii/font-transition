@@ -121,7 +121,7 @@ function factor(cn,lf,hf,len1,len2) {
     if(cn > 0) {
 	KF = KF/cn;
     }
-    console.log(cn,lf,hf,len1/len2,KF);
+    //console.log(cn,lf,hf,len1/len2,KF);
     return KF;
 }
 function makeDotPolarity(xy1,xy2) {
@@ -298,7 +298,7 @@ function getXy1x(xy1,xy2,ln1,ln2,len1,len2,dp,chr,MF,K,DANG) {
 	var Q = re.flag;
 	if(k > 0) { Q = true; }
 	var KF = re.KF;
-	console.log("chr,Q:", chr,Q);
+	//console.log("chr,Q:", chr,Q);
 	var N2 = Math.round(N/2);
 	var jmt = 0;
 	var jm = 0;

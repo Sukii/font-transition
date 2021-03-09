@@ -106,7 +106,7 @@ function loadFonts() {
 	};
     });
     intId = setInterval(function() {
-	if(pd1 && pd2) {
+	if(!isEmpty(pd1) && !isEmpty(pd2)) {
 	    //console.log("pd1:", pd1);
 	    //console.log("pd2:", pd2);
 	    clearInterval(intId);
@@ -120,6 +120,9 @@ function loadFonts() {
 	document.getElementById("anim").disabled = false;
 	setAnimation(xyts,chrs);
     }, false);
+}
+function isEmpty(obj) {
+    return Object.keys(obj).length === 0;
 }
 function animtext() {
     chars = document.getElementById("chars").value.trim();
