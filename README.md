@@ -1,7 +1,7 @@
 # Font transition
 
 See TUGBoat publication:
-https://tug.org/TUGboat/Contents/contents42-1.html
+https://tug.org/TUGboat/tb42-1/tb130venkatesan-transfont.html
 
 This is a javascript solution to the problem posed in Stackoverflow:<br>
 https://stackoverflow.com/questions/65680948/css-transition-with-fonts
