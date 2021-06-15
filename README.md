@@ -1,7 +1,12 @@
 # Font transition
 
+See TUGBoat publication:
+https://tug.org/TUGboat/Contents/contents42-1.html
+
 This is a javascript solution to the problem posed in Stackoverflow:<br>
 https://stackoverflow.com/questions/65680948/css-transition-with-fonts
+see also:
+https://stackoverflow.com/questions/38925840/font-family-css-transition
 
 For more details on this problem, see:<br>
 See Chapter 13: Metafont, Metamathematics, and Metaphysics: Comments on Donald Knuth's Article "The Concept of a Meta-Font". in Douglas Hofstadter's book:
@@ -18,5 +23,6 @@ The demo is site here:<br>
 [https://cqrl.in/dev/font-transition-js.html](https://cqrl.in/dev/font-transition-js.html)
 
 It works for characters which are homeomorphic to a simple circular disc (like H, X, S, C etc.) and also ones with one hole (like O, Q, A, P, etc) and also for "B" and "g" (with two holes).
+
 
 
