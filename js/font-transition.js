@@ -1,9 +1,9 @@
-var MAX = 1000000000;
+var MAX = 1000000;
 var M = 500;
 var mM = 100;
 var N = 10;
-var X = 0;
-var Y = -50;
+var Xo = -50;
+var Yo = 0;
 var R = 1;
 var eps = 0.01;
 var debug = false;
@@ -42,6 +42,9 @@ function fontTransition(pds1,pds2,chr) {
     var ln2 = [];
     var res1;
     var res2;
+    var r = getOrigin(chr);
+    var X0 = r.x;
+    var Y0 = r.y;    
     if(chr != " ") {
 	pds1.forEach(function(item, k) {
 	    var pp = getPathPoints(item,M*N);
@@ -55,7 +58,7 @@ function fontTransition(pds1,pds2,chr) {
 	//-------font2 starts here
 	pds2.forEach(function(item, k) {
 	    var pp = getPathPoints(item,M);
-	    xy2.push(rotateArray(pp.xy));
+	    xy2.push(rotateArray(pp.xy,X0,Y0));
 	    len2.push(pp.len);
 	    x2m.push(pp.xm);
 	    y2m.push(pp.ym);
@@ -66,50 +69,9 @@ function fontTransition(pds1,pds2,chr) {
     return {res1: res1, res2: res2};
 }
 function getOrigin(chr) {
-    var X0 = 0;
-    var Y0 = 0;
-    if(chr == "rx") {
-	X0 = 400;
-	Y0 = 100;
-    }
-    if(chr == "Tx") {
-	X0 = 37;
-	Y0 = 80;
-    }
-    if(chr == "fx") {
-	Y0 = 90;
-    }
+    var X0 = Xo;
+    var Y0 = Yo;
     return {x: X0, y: Y0};
-}
-function getAnimMode(chr,ln,len1,len2,pol,MF,DANG) {
-    var hv = 0;
-    var cn = 0;
-    pol.forEach(function(item, i) {
-	var o = getOrientations(pol,MF,i);
-	if(o.t1.match(/^(-?H|-?V)$/)) {
-	    hv++;
-	}
-	var tf = o.t_1 + o.t2;
-	if(tf.match(/^(-?H-?V|-?V-?H)$/)
-	  || o.dalpha > DANG ) {
-	    cn++;
-	}
-    });
-    var Q = true;
-    if(chr.match(/[^ijcegosCOQ]$/)) {
-	Q = false;
-    }
-    var hf = hv/(pol.length + 0.0001);
-    var lf = ln.ll/(ln.lc + ln.lq + 0.0001);
-    if(lf > 0.1
-       || hf > 0.5) {
-	Q = false;
-    }
-    if(chr.match(/[^a-zA-Z]/)) {
-	Q = true;
-    }
-    var KF = factor(cn,lf,hf,len1,len2);
-    return {flag: Q, KF: KF};
 }
 function factor(cn,lf,hf,len1,len2) {
     var KF = 1;
@@ -123,43 +85,6 @@ function factor(cn,lf,hf,len1,len2) {
     }
     //console.log(cn,lf,hf,len1/len2,KF);
     return KF;
-}
-function makeDotPolarity(xy1,xy2) {
-    function makePolarityArray(arr) {
-	var newdot = [];
-	var newpol = [];
-	var L = arr.length;
-	for(var i=0; i<L; i++) {
-	    if(i == 0) {
-		newdot.push(dotproduct(arr[L-1],arr[0],arr[0],arr[1]));
-		newpol.push(getPolarity(arr[L-1],arr[0],arr[0],arr[1]));
-	    }
-	    else if(i > 0 && i < L-1) {
-		newdot.push(dotproduct(arr[i-1],arr[i],arr[i],arr[i+1]));
-		newpol.push(getPolarity(arr[i-1],arr[i],arr[i],arr[i+1]));
-	    }
-	    else if(i == L-1) {
-		newdot.push(dotproduct(arr[L-2],arr[L-1],arr[L-1],arr[0]));
-		newpol.push(getPolarity(arr[L-2],arr[L-1],arr[L-1],arr[0]));
-	    }
-	}
-	return {dot: newdot, pol: newpol};
-    }
-    var dot1 = [];
-    var dot2 = [];
-    var pol1 = [];
-    var pol2 = [];
-    xy1.forEach(function(item, k) {
-	var val = makePolarityArray(xy1[k]);
-	dot1.push(val.dot);
-	pol1.push(val.pol);
-    });
-    xy2.forEach(function(item, k) {
-	var val = makePolarityArray(xy2[k]);
-	dot2.push(val.dot);
-	pol2.push(val.pol);
-    });
-    return {dot1: dot1, dot2: dot2, pol1: pol1, pol2: pol2};
 }
 function getTopLeftIndex(xy,X0,Y0) {
     var rmin = 10000000000;
@@ -227,29 +152,11 @@ function reorderArray(arr,len,xm,ym,ln) {
     }
     return {arr: newarr, len: newlen, xm: newxm, ym: newym, ln: newln };
 }
-function rotateArray(arr,chr) {
-    arr = makeArrayDistinct(arr);
-    var r = getOrigin(chr);
-    var X0 = r.x;
-    var Y0 = r.y;
+function rotateArray(arr,X0,Y0) {
     var istart = getTopLeftIndex(arr,X0,Y0);
     var prevArray = arr.slice(0,istart);
     var nextArray = arr.slice(istart);
     return nextArray.concat(prevArray);
-}
-function makeArrayDistinct(arr) {
-    var L = arr.length;
-    arr.forEach(function(item,i) {
-	if(i > 0) {
-	    var i1 = i+1 ;
-	    if(i == L-1) { i1 = 0; }
-	    if(arr[i-1].x == item.x && arr[i-1].y == item.y) {
-		item.x = arr[i1].x*0.01+item.x*0.99;
-		item.y = arr[i1].y*0.01+item.y*0.99;
-	    }
-	}
-    });
-    return arr;
 }
 function anim(pds1,pds2,chr,MF,K,DANG) {
     var xyt = [];
@@ -266,17 +173,20 @@ function anim(pds1,pds2,chr,MF,K,DANG) {
 	    console.log("xy1,xy2;",xy1,xy2);
 	}
 	else {
-	    xy1 = resetOriginForXy1(xy1,chr);
-	    var dp = makeDotPolarity(xy1,xy2);
-	    var xy1x = getXy1x(xy1,xy2,ln1,ln2,len1,len2,dp,chr,MF,K,DANG);
+	    xy1 = resetOriginForXy1(xy1,xy2,chr);
+	    var xy1x = getXy1x(xy1,xy2,ln1,ln2,len1,len2,chr,MF,K,DANG);
 	    xy2.forEach(function(ktem, k) {
 		var xytk = [];
 		for(var it=0; it<11; it++) {
 		    var xyti = [];
 		    ktem.forEach(function(item, i) {
-			var xt = it*xy1x[k][i].x/10 + (10-it)*item.x/10;
-			var yt = it*xy1x[k][i].y/10 + (10-it)*item.y/10;
-			var loc = {x: xt, y: yt, type: xy1x[k][i].type};
+			var x1 = xy1x[k][i].x;
+			var x2 = item.x;
+			var y1 = xy1x[k][i].y;
+			var y2 = item.y;
+			var xt = it*x1/10 + (10-it)*x2/10;
+			var yt = it*y1/10 + (10-it)*y2/10;
+			var loc = {x: xt, y: yt, type: xy2[k][i].type};
 			xyti.push(loc); 
 		    });
 		    xytk.push(xyti);
@@ -287,117 +197,136 @@ function anim(pds1,pds2,chr,MF,K,DANG) {
     }
     return {xyt: xyt, chr: chr};
 }
-function getXy1x(xy1,xy2,ln1,ln2,len1,len2,dp,chr,MF,K,DANG) {
-    var dot1 = dp.dot1;
-    var dot2 = dp.dot2;
-    var pol1 = dp.pol1;
-    var pol2 = dp.pol2;
+function getXy1x(xy1,xy2,ln1,ln2,len1,len2,chr,MF,K,DANG) {
     xy1x = [];
-    xy2.forEach(function(ktem, k) {
-	var re = getAnimMode(chr,ln2[k],len1[k],len2[k],pol2[k],MF,DANG);
-	var Q = re.flag;
-	if(k > 0) { Q = true; }
-	var KF = re.KF;
-	//console.log("chr,Q:", chr,Q);
-	var N2 = Math.round(N/2);
-	var jmt = 0;
-	var jm = 0;
-	var xy1xk = [];
-	var L2 = ktem.length;
-	var L1 = xy1[k].length;
-	ktem.forEach(function(item, i) {
-	    var x = item.x;
-	    var y = item.y;
-	    var min = 1000000;
-	    //console.log(pol2[k],MF,i);
-	    var o2 = getOrientations(pol2[k],MF,i);
-	    var flag2 = o2.t0+o2.t1;
-	    var flag2x = o2.t_1+o2.t2;
-	    var jmax = i*N+K*N*KF;
-	    var mode = "none";
-	    for(var j=jmt; j<jmax && j<M*N-1 && !Q; j++) {
-		var o1 = getOrientations(pol1[k],N,j);
-		var flag1 = o1.t0+o1.t1;
-		var flag1x = o1.t_1+o1.t2;
-		var d = getDistance(xy1[k][j],item);
-		var ry = getDistanceY(xy1[k][j],item);
-		var rx = getDistanceX(xy1[k][j],item);
-		if(flag2x.match(/^(HH|-H-H)$/)) {
-		    r = rx + 0.1*ry;
-		    mode = "h";
+    var m1 = getSlopeArray(xy1);
+    var dm1 = getDiffSlopeArray(m1);
+    var m2 = getSlopeArray(xy2);
+    var dm2 = getDiffSlopeArray(m2);
+    var minerr = 100;
+    var minn = 0;
+    var xy1xn = [];
+    if(K[chr]) { DANG = [0]; }
+    DANG.forEach(function(dang,n) {
+	var xy1x = [];
+	xy2.forEach(function(ktem, k) {
+	    var Q = false;
+	    if(dang < 1) { Q = true; }
+	    if(k > 0) { Q = true; }
+	    var N2 = Math.round(N/2);
+	    var jmt = 0;
+	    var jm = 0;
+	    var xy1xk = [];
+	    var L2 = ktem.length;
+	    var L1 = xy1[k].length;
+	    ktem.forEach(function(item, i) {
+		var x = item.x;
+		var y = item.y;
+		var xy2type = item.type;
+		var m2i = m2[k][i];
+		var m2i1 = (i < L2-1) ? m2[k][i+1] : m2[k][0];
+		var m2i2 = (i < L2-2) ? m2[k][i+2] : (i == L2-2) ? m2[k][0] : m2[k][1];
+		var dm2iv = dm2[k][i];
+		var dm2iv1 = (i < L2-1) ? dm2[k][i+1] : dm2[k][0];
+		var min = 1000000;
+		var jmax = i*N+dang*N;
+		var mode = "none";
+		if(!Q) {
+		    for(var j=jmt; j<jmax && j<M*N-1; j++) {
+			var xy1type = xy1[k][j].type;
+			var d = getDistance(xy1[k][j],item);
+			var ry = getDistanceY(xy1[k][j],item);
+			var rx = getDistanceX(xy1[k][j],item);
+			var m1j = m1[k][j];
+			var m1j1 = (j < L1-1) ? m1[k][j+1] : m1[k][0];
+			var dm1jv = dm1[k][j];
+			var dm1jv1 = (j < L1-1) ? dm1[k][j+1] : dm1[k][0];
+			if(dm2iv+dm2iv1 > 40 && dm2iv+dm2iv1 < 180) {
+			    if(dm1jv+dm1jv1 > 40 && dm1jv+dm1jv1 < 180) {
+				r = (rx+ry)/100;
+				if(r < min) { mode = "R0"; }
+			    }
+			    else {
+				r = rx + ry;
+				if(r < min) { mode = "R1"; }
+			    }
+			}
+			else if(Math.abs(m2i) > 55 || Math.abs(m2i1) > 55) {
+			    r = ry;
+			    if(r < min) { mode = "V"; }
+			}
+			else if(Math.abs(m2i) < 12 || Math.abs(Math.abs(m2i)-180) < 12) {
+			    if(Math.abs(m1j) < 12 || Math.abs(Math.abs(m1j)-180) < 12) {
+				r = rx;
+				if(r < min) { mode = "H"; }
+			    }
+			}
+			else {
+			    r = rx+ry;
+			    if(r < min) { mode = "x"; }
+			}
+			if(r < min) {
+			    min = r;
+			    jm = j;
+			}
+		    }
+		    var ntype = "none";
+		    if(mode == "R0" || mode == "R1") {
+			ntype = "x";
+		    }
+		    jmt = jm + 1;
 		}
-		else {
-		    r = ry + 0.1*rx;
-		    mode = "v";
-		}
-		if(r < min) {
-		    min = r;
-		    jm = j;
-		}
-	    }
-	    var o1 = getOrientations(pol1[k],N,jm);
-	    //console.log("i,jm,flag1,flag2,min,mode,jm,o1,o2,xy1,xy2:",i,jm,flag1,flag2,min,mode,o1,o2,xy1[k][jm],xy2[k][i]);
-	    var ntype = "none";
-	    if((Math.abs(o1.dalpha) > (DANG-20) && Math.abs(o1.ddalpha) > DANG)
-	       && (Math.abs(o2.dalpha) > (DANG-20) && Math.abs(o2.ddalpha) > DANG)
-	      ) {
-		if(i > 1 && i < xy2[k].length-2) {
-		    //console.log(i,"x2:",o1,o2,xy2[k][i-2],xy2[k][i-1],xy2[k][i],xy2[k][i+1],xy2[k][i+2]);
-		}
-		else {
-		    //console.log("none");
-		}
-		ntype = "x";
-	    }
-	    /*
-	    if(flag2.match(/^(HH|-H-H)$/)) {
-	    	ntype = "x";
-	    }*/
-	    var loc = {x: xy1[k][jm].x, y: xy1[k][jm].y, type: ntype};
-	    xy1xk.push(loc);
-	    if(Q) { jm += N; }
-	    jmt = jm + 1;
+		var loc = {x: xy1[k][jm].x, y: xy1[k][jm].y, type: ntype};
+		if(Q) { jm += N; }
+		xy1xk.push(loc);
+	    });
+	    xy1x.push(xy1xk);
 	});
-	xy1x.push(xy1xk);
+	xy1xn.push(xy1x);
+	errn = getError(xy2,xy1x);
+	if(errn < minerr) {
+	    minerr = errn;
+	    minn = n;
+	}
     });
-    return xy1x;
+    console.log(chr,DANG[minn],minerr);
+    return xy1xn[minn];
+}
+function getError(xy2,xy1x) {
+    var err = 0;
+    var NP = 0;
+    xy2.forEach(function(ktem, k) {
+	ktem.forEach(function(item, i) {
+	    var x1 = xy1x[k][i].x;
+	    var x2 = item.x;
+	    var y1 = xy1x[k][i].y;
+	    var y2 = item.y;
+	    err += (x1-x2)**2+(y1-y2)**2;
+	    NP++;
+	});
+    });
+    var sigma = Math.sqrt(err/NP);
+    return sigma;
 }
 function normalize(theta) {
     if(theta > 90) { theta = 180 - theta; }
     if(theta < -90) { theta = 180 + theta; }
     return theta;
 }
-function getOrientations(polk,m,p) {
-    var L = polk.length;
-    var alpha_1 = polk[L-m][0];
-    if(alpha_1 == 1111111) { alpha_1 = polk[L-m-1][0]; } 
-    if(p > m-1) {
-	alpha_1 = polk[p-m][0];
-	if(alpha_1 == 1111111 && p > m) { alpha_1 = polk[p-m-1][0]; } 
-    }
-    //console.log("m,p,polk:",m,p,polk);
-    var alpha0 = polk[p][0];
-    if(alpha0 == 1111111) { alpha0 = alpha_1; } 
-    var alpha1 = polk[p][1];
-    if(alpha1 == 1111111) { alpha1 = alpha0; } 
-    var alpha2;
-    if(p < L-m) {
-	alpha2 = polk[p+m][1];
-    }
-    else {
-	alpha2 = polk[p+m-L][1];
-    }
-    if(alpha2 == 1111111) { alpha2 = alpha1; } 
-    var dalpha = normalize(alpha1-alpha0);
-    var ddalpha = normalize(alpha2-alpha_1);
-    return { alpha_1: alpha_1, alpha0: alpha0, alpha1: alpha1, alpha2: alpha2, dalpha: dalpha, ddalpha: ddalpha, t_1: dir(alpha_1), t0: dir(alpha0), t1: dir(alpha1), t2: dir(alpha2) };
-}
-function resetOriginForXy1(xy1,chr) {
+function resetOriginForXy1(xy1,xy2,chr) {
     var r = getOrigin(chr);
     var X0 = r.x;
     var Y0 = r.y;
+    var Q = false;
+    if(chr.match(/^[cegosCOQ]$/)) {
+	Q = true;
+    }
     xy1.forEach(function(item, i) {
 	var arr = xy1[i];
+	if(Q) {
+	    X0 = xy2[i][0].x;
+	    Y0 = xy2[i][0].y;
+	}
 	var istart = getTopLeftIndex(arr,X0,Y0);
 	var prevArray = arr.slice(0,istart);
 	var nextArray = arr.slice(istart);
@@ -432,57 +361,54 @@ function getDistanceX(xyA1,xyA2) {
 function getDistanceY(xyA1,xyA2) {
     return Math.abs(xyA1.y-xyA2.y);
 }
-function getPolarity(xyA1,xyA2,xyB1,xyB2) {
-    var ang = [];
-    var m1 = getSlopeFromFromTwoPoints(xyA1,xyA2);
-    var m2 = getSlopeFromFromTwoPoints(xyB1,xyB2);
-    ang.push(getAngleFromSlope(m1));
-    ang.push(getAngleFromSlope(m2));
-    return ang;
+function getSlopeArray(xy) {
+    function getSlope(xya,xyb) {
+	var ang = 90;
+	var dx = xyb.x-xya.x;
+	var dy = xyb.y-xya.y;
+	if(Math.abs(dx) == 0) {
+	    ang = 90*Math.sign(dy);
+	}
+	else {
+	    m = dy/dx;
+	    ang = 180*Math.atan(Math.abs(m))/Math.PI;
+	    if(dx > 0 && dy > 0) { ang = ang; }
+	    else if(dx < 0 && dy >= 0) { ang = 180-ang; }
+	    else if(dx < 0 && dy < 0) { ang = ang-180; }
+	    else if(dx > 0 && dy <= 0) { ang = -ang; }
+	}
+	return ang;
+    }
+    var dxy = [];
+    xy.forEach(function(ktem, k) {
+	var M = ktem.length;
+	var xyarr = [];
+	ktem.forEach(function(item, i) {
+	    var ktem_1 = (i == 0) ? ktem[M-1] : ktem[i-1];
+	    xyarr.push(getSlope(ktem_1,item));
+	});
+	dxy.push(xyarr);
+    });
+    return dxy;
 }
-function dotproduct(xyA1,xyA2,xyB1,xyB2) {
-    var m1 = getSlopeFromFromTwoPoints(xyA1,xyA2);
-    var m2 = getSlopeFromFromTwoPoints(xyB1,xyB2);
-    var v1 = getUnitVectorFromSlope(m1);
-    var v2 = getUnitVectorFromSlope(m2);
-    var dp = v1.x*v2.x + v1.y*v2.y;
-    return dp;
-}
-function getUnitVectorFromSlope(m) {
-    var cos = Math.sqrt(1/(1+m**2));
-    var sin = m*cos;
-    var v = {x: cos, y: sin}
-    return v;
-}
-function getSlopeFromFromTwoPoints(xya,xyb) {
-    var m = MAX;
-    xya.x = Math.round(xya.x*10000)/10000;
-    xya.y = Math.round(xya.y*10000)/10000;
-    xyb.x = Math.round(xyb.x*10000)/10000;
-    xyb.y = Math.round(xyb.y*10000)/10000;
-    var dx = xyb.x-xya.x;
-    var dy = xyb.y-xya.y;
-    if(dx == 0 && dy == 0) { m = 1111111; }
-    if(dx != 0) {
-	m = dy/dx;
+
+function getDiffSlopeArray(xy) {
+    function normalizeAngle(ang) {
+	if(ang > 180) { ang = ang-360; }
+	if(ang < -180) { ang = ang+360; }
+	return ang;
     }
-    if(Math.abs(m) > 4 && dy != 0) {
-	m = Math.abs(m)*(dy/Math.abs(dy));
-    }
-    if(Math.abs(m) < 0.5 && dx != 0) {
-	m = Math.abs(m)*(dx/Math.abs(dx));
-    }
-    if(m == 0 && dx != 0) {
-	m = 0.000000001*(dx/Math.abs(dx));
-    }
-    return m;
-}
-function getAngleFromSlope(m) {
-    var theta = 1111111;
-    if(m != 1111111) {
-	theta = (180/Math.PI)*Math.atan(m);
-    }
-    return theta;
+    var dxy = [];
+    xy.forEach(function(ktem, k) {
+	var M = ktem.length;
+	var xyarr = [];
+	ktem.forEach(function(item, i) {
+	    var ktem_1 = (i == 0) ? ktem[M-1] : ktem[i-1];
+	    xyarr.push(normalizeAngle(item-ktem_1));
+	});
+	dxy.push(xyarr);
+    });
+    return dxy;
 }
 function showTime(msg) {
     if(debug) {
@@ -497,7 +423,8 @@ function createSVGPath(d) {
     p.setAttributeNode(att);
     return p;
 }
-function getPathPoints(pd,K) {
+function getPathPoints(pd,NP) {
+    var ds = 1/(NP-1);
     var xy = [];
     var r0 = {x: 0, y: 0 };
     var len = [];
@@ -541,11 +468,11 @@ function getPathPoints(pd,K) {
 	    r0 = r1;
 	}
 	else if(item.type == "Z") {
-	    var L = 0;
-	    len.push(L);
+	    //var L = 0;
+	    //len.push(L);
 	}
 	else {
-	    console.log("not yet handled!! error!!");
+	    console.log("spline item type: " + item.type +  "; not yet handled!! error!!");
 	    fail;
 	}
     };
@@ -553,76 +480,58 @@ function getPathPoints(pd,K) {
     len.forEach( function(item, i) {
 	L += item;
     });
-    var fmt = 0;
-    var mt = [];
+    var fc = 0;
+    var mfc = [];
+    var mf = [];
     len.forEach( function(item, i) {
-	fmt += item*K/L;
-	mt.push(Math.round(fmt));
+	var f= item/L;
+	fc += f;
+	mf.push(f);
+	mfc.push(fc);
     });
-    var m = [];
-    var ml = 0;
-    mt.forEach( function(item, i) {
-	if(i == 0) {
-	    m.push(mt[0]);
-	    ml += mt[0];
-	}
-	else {
-	    m.push(item-mt[i-1]);
-	    ml += item-mt[i-1];
-	}
-    });
-    //console.log(ml,m);
-    //---create m = (len[i]/L)*K points uniformly along the sub-paths    
+    mfc[mfc.length-1] = 1.0;
     var xy = [];
-    //console.log("L:",L);
     var r0 = {x: 0, y: 0 };
-    for(var k in pd) {
-	var item = pd[k];
-	if(item.type == "M") {
-	    r0.x = item.x;
-	    r0.y = item.y;
-	}
-	else if(item.type == "C") {
-	    var r1 = { x: item.x1, y: item.y1};
-	    var r2 = { x: item.x2, y: item.y2};
-	    var r3 = { x: item.x, y: item.y};
-	    //console.log("Cubicx:",i,r0,r1,r2,r3,m)
-	    var ty = "C";
-	    for(var i=0; i<m[k]; i++) {
-		var t = i;
-		if(m[k] > 1) { t = i/(m[k]-1); };
-		var r = getPointInCubicBrezier(r0,r1,r2,r3,t);
-		if(i == m-1) { ty = "C_"; }
-		xy.push({x: r.x, y: r.y, type: ty});
+    for(var i=0; i < NP;  i++) {
+	var k = 0;
+	var s = i*ds;
+        mfc.forEach( function(item, j) {
+	    if(j > 0 && s >= mfc[j-1] && (s < item || j == mfc.length-1)) {
+		k = j;
 	    }
-	    r0 = r3;
+	});	
+	var item = pd[k];
+	var t = (k == 0 || mf[k] == 0) ? 0 : (s - mfc[k-1])/mf[k];
+	var dt = (mf[k] == 0) ? 0 : ds/mf[k];
+	if(t+dt > 1.0) { t = 1.0; }
+	if(k > 0) {
+	    //--Here setting r0 initial condition from previous spline--//
+	    var prevItem = pd[k-1];
+	    if(prevItem.type.match(/^(M|C|Q|L)$/)) {
+		r0 = { x: prevItem.x, y: prevItem.y};
+	    }
+	}
+	//----Now procesing the node arrays----//
+	if(item.type == "C") {
+	    var r1 = {x: item.x1, y: item.y1};
+	    var r2 = {x: item.x2, y: item.y2};
+	    var r3 = {x: item.x, y: item.y};
+	    var ty = (t == 1.0) ? "C_" : "C";
+	    var r = getPointInCubicBrezier(r0,r1,r2,r3,t);
+	    xy.push({x: r.x, y: r.y, type: ty});
 	}
 	else if(item.type == "Q") {
 	    var r1 = { x: item.x1, y: item.y1};
 	    var r2 = { x: item.x, y: item.y};
-	    //console.log("Quadraticx:",i,r0,r1,r2,m)
-	    var ty = "Q";
-	    for(var i=0; i<m[k]; i++) {
-		var t = i;
-		if(m[k] > 1) { t = i/(m[k]-1); };
-		var r = getPointInQuadraticBrezier(r0,r1,r2,t);
-		if(i == m[k]-1) { ty = "Q_"; }
-		xy.push({x: r.x, y: r.y, type: ty});
-	    }
-	    r0 = r2;
+	    var ty = (t == 1.0) ? "Q_" : "Q";
+	    var r = getPointInQuadraticBrezier(r0,r1,r2,t);
+	    xy.push({x: r.x, y: r.y, type: ty});
 	}
  	else if(item.type == "L") {
 	    var r1 = { x: item.x, y: item.y};
-	    //console.log("Linearx:",i,r0,r1,m)
-	    var ty = "L";
-	    for(var i=0; i<m[k]; i++) {
-		var t = i;
-		if(m[k] > 1) { t = i/(m[k]-1); };
-		var r = getPointInLine(r0,r1,t);
-		if(i == m[k]-1) { ty = "L_"; }
-		xy.push({x: r.x, y: r.y, type: ty});
-	    }
-	    r0 = r1;
+	    var ty = (t == 1.0) ? "L_" : "L";
+	    var r = getPointInLine(r0,r1,t);
+	    xy.push({x: r.x, y: r.y, type: ty});
 	}
     };
     var xm = 0;
@@ -633,9 +542,6 @@ function getPathPoints(pd,K) {
     });
     xm = xm/xy.length;
     ym = ym/xy.length;
-    if(xy.length != M && xy.length != M*N) {
-	console.log("Len:",xy.length);
-    }
     var ln = { lc: lc, lq: lq, ll: ll};
     return {xy: xy, len: L, xm: xm, ym: ym, ln: ln};
 }

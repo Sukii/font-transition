@@ -1,9 +1,5 @@
-#chars { width: 20em; }
+#chars { width: 30em; }
+#it { width: 3em; }
 @media print {
     .config { display: none; }
-}
-@media only screen and (max-device-width: 800px) {
-    .config span { font-size: 200%; }
-    .config input { font-size: 200%; }
-    .config button { font-size: 200%; }
 }

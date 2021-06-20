@@ -14,10 +14,8 @@ var chars;
 var M = 500;
 var N = 10;
 var MD = 1;
-//var p =  prompt("Parameters K,DANG:","10,50").split(",");
-var p = "3,40".split(",");
-var K = Math.round(M/parseFloat(p[0]));
-var DANG = parseInt(p[1]);
+var M100 = M/3;
+var DANG = [0,3,5,10,15,20,30,50,100];
 function sliceClosedCurves(pd) {
     var pdc = [];
     var pdci = [];
@@ -42,17 +40,38 @@ function loadFonts() {
     var fff1 = "LinLibertine_R.otf";
     var fff2 = "LinBiolinum_R.otf";
     var chrs = document.getElementById("chars").value.trim();
-    if(chrs.match(/^DejaVu/i)) {
-	chrs = chrs.replace(/^DejaVu *[:]? */i,"");
-	document.getElementById("chars").value = chrs;
-	fff1 = "DejaVuSerif.ttf";
-	fff2 = "DejaVuSans.ttf";	
-    }
+    var type = document.getElementById("transtype").value.trim();
+    //console.log("type:",type);
     if(!chrs.match(/[a-zA-Z]/)) {
 	fff1 = "NotoSerifTamil-Regular.ttf";
 	fff2 = "NotoSansTamil-Regular.ttf";
     }
-    console.log(fff1,fff2);
+    else if(type == "dejavu") {
+	document.getElementById("chars").value = chrs;
+	fff1 = "DejaVuSerif.ttf";
+	fff2 = "DejaVuSans.ttf";
+    }
+    else if(type == "bold") {
+	document.getElementById("chars").value = chrs;
+	fff1 = "LinBiolinum_RB.otf";
+	fff2 = "LinBiolinum_R.otf";
+    }
+    else if(type == "bold_serif") {
+	document.getElementById("chars").value = chrs;
+	fff1 = "LinLibertine_RB.otf";
+	fff2 = "LinBiolinum_R.otf";
+    }
+    else if(type == "italic_serif") {
+	document.getElementById("chars").value = chrs;
+	fff1 = "LinLibertine_RI.otf";
+	fff2 = "LinBiolinum_R.otf";
+    }
+    else if(type == "italic") {
+	document.getElementById("chars").value = chrs;
+	fff1 = "LinBiolinum_RI.otf";
+	fff2 = "LinBiolinum_R.otf";
+    }
+    //console.log(fff1,fff2);
     document.getElementById("anim").disabled = true;
     document.getElementById("itr").onmouseup = function() {
 	if(chars.length > 1) {
@@ -84,7 +103,11 @@ function loadFonts() {
 	    var pdc = glyph.getPath(0,120,72).commands;
 	    var chr = String.fromCharCode(glyph.unicode);
 	    var spdc = sliceClosedCurves(pdc);
-	    pd1["uni"+glyph.unicode] = spdc;
+	    var uni = "uni"+glyph.unicode;
+	    if(uni == "uni109" && spdc.length > 1) {
+		spdc.pop();
+	    }
+	    pd1[uni] = spdc;
 	    var options = { decimalPlaces: 4 };
 	    w1["uni"+glyph.unicode] = font1.getAdvanceWidth(chr, 72, options);
 	};
@@ -100,7 +123,8 @@ function loadFonts() {
 	    var pdc = glyph.getPath(0,120,72).commands;
 	    var chr = String.fromCharCode(glyph.unicode);
 	    var spdc = sliceClosedCurves(pdc);
-	    pd2["uni"+glyph.unicode] = spdc;
+	    var uni = "uni"+glyph.unicode;
+	    pd2[uni] = spdc;
 	    var options = { decimalPlaces: 4 };
 	    w2["uni"+glyph.unicode] = font2.getAdvanceWidth(chr, 72, options);
 	};
@@ -125,7 +149,16 @@ function isEmpty(obj) {
     return Object.keys(obj).length === 0;
 }
 function animtext() {
+    var K = {};
+    var alphabets = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ".split("");
+    alphabets.forEach(function(item, i) {
+	K[item] = false;
+	if(item.match(/^[Q]$/)) {
+	    K[item] = true;
+	}
+    });
     chars = document.getElementById("chars").value.trim();
+    //console.log(pd1,pd2);
     worker1.postMessage({pd1: pd1, pd2: pd2, chars: chars, MD: MD, K: K, DANG: DANG, M: M, N: N});
 }
 function resetSVG() {

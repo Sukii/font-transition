@@ -3,19 +3,40 @@
   <head>
     <title>Font transition</title>
     <meta charset="utf-8">
-    <link rel="stylesheet" href="/css/font-transition.css?v=4867">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/font-transition.css?v=445123">
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@latest/dist/opentype.min.js"></script>
-    <script src="/js/load-fonts.js?v=4867"></script>
-    <script src="/js/set-font-animation.js?v=4867"></script>
+    <script src="/js/load-fonts.js?v=3144445678901234567890"></script>
+    <script src="/js/set-font-animation.js?v=314"></script>
+    <script>
+      function loadTextFromURL() {
+	  const urlParams = new URLSearchParams(window.location.search);
+	  const text = urlParams.get('text');
+	  const mode = urlParams.get('mode');
+	  document.getElementById("chars").value = text;
+	  document.getElementById("transtype").value = mode;
+      }
+    </script>
   </head>
-  <body onLoad="loadFonts();">
+  <body>
     <div id="font-transition">
-      <div class="config">
-	<input id="chars" value="A Quick Brown Fox Jumped High Over A Lazy Dog (fluttering fine blue butterflies)." />
-	Serif : <input id="it" type="number" value="30" max="100"  min="0" step="10" size="1" />%
-	<button id="anim" onClick="animtext();">Display font</button><br>
+      <div class="config" title="Type just a single character and press (Display font) to see all 11 transitions">
+	<input id="chars" value="Quick Brown Fox Jumped High Over The Lazy Dog" />
+	<br>
+	<input id="itr" type="range" max="100" min="0" value="30" /><input id="it" type="number" value="30" max="100"  min="0" step="10" size="1" readonly="true"/>%
+	<br>
+	<select id="transtype">
+	  <option value="serif">Serif</option>
+	  <option value="dejavu">Slab-serif</option>
+	  <option value="bold">Sans-Bold</option>
+	  <option value="bold_serif">Serif-Bold</option>
+	  <option value="italic">Sans-Italic</option>
+	  <option value="italic_serif">Serif-Italic</option>
+	</select>
+	<button id="anim" onClick="loadFonts();">Display font</button>
+	<br>
       </div>
-      <div id="poly-transition"><svg id="font-display" viewBox="0 0 1000 1000"></svg></div>
+      <div id="poly-transition"><svg id="font-display" viewBox="0 0 1000 600"></svg></div>
     </div>
   </body>
 </html>
