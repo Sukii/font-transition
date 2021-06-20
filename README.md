@@ -1,7 +1,7 @@
 # Font transition
 
 See TUGBoat publication:
-https://tug.org/TUGboat/tb42-1/tb130venkatesan-transfont.html
+https://tug.org/TUGboat/tb42-1/tb130venkatesan-transfont.html<br>
 (see also [Addendum to the article](https://cqrl.in/x2WesYy) that proves orthogonal mapping achieves minimal effort in terms of movement).
 
 This is a javascript solution to the problem posed in Stackoverflow:<br>
