@@ -2,6 +2,7 @@
 
 See TUGBoat publication:
 https://tug.org/TUGboat/tb42-1/tb130venkatesan-transfont.html
+(see also [Addendum to the article](https://cqrl.in/x2WesYy) that proves orthogonal mapping achieves minimal effort in terms of movement).
 
 This is a javascript solution to the problem posed in Stackoverflow:<br>
 https://stackoverflow.com/questions/65680948/css-transition-with-fonts
@@ -23,6 +24,7 @@ The demo is site here:<br>
 [https://cqrl.in/dev/font-transition-js.html](https://cqrl.in/dev/font-transition-js.html)
 
 It works for characters which are homeomorphic to a simple circular disc (like H, X, S, C etc.) and also ones with one hole (like O, Q, A, P, etc) and also for "B" and "g" (with two holes).
+
 
 
 
